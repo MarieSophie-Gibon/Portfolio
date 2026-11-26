@@ -1,0 +1,301 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------
+ * Design tokens — Digital Sketchbook × Destroy Zine
+ * Tailwind v4 : chaque token devient une utility (bg-stage, text-magenta,
+ * font-display, etc.).
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Écrin iPadOS */
+  --color-stage: #2e354b;
+  --color-stage-light: #38415c;
+  --color-stage-dark: #23293b;
+
+  /* Papier & encres */
+  --color-paper: #ede9dd;
+  --color-paper-shade: #e2ddcd;
+  --color-grid: #cfc8b5;
+  --color-ink: #13141a;
+  --color-ink-soft: #3a3b45;
+
+  /* Accents néon */
+  --color-magenta: #ff1e7a;
+  --color-cyan: #00e5ff;
+  --color-lime: #b8ff00;
+  --color-hazard: #ffb800;
+  --color-violet: #8b5cf6;
+
+  /* Bureau scrapbook & carnet relié */
+  --color-desk: #83c5d6;
+  --color-cover: #e2a72e;
+  --color-cover-dark: #b9811a;
+  --color-page: #fbf8f1;
+  --color-rule: #b9c6d8;
+  --color-gold: #c99a2e;
+
+  /* Pastels stickers */
+  --color-butter: #ffe27a;
+  --color-blush: #f9c6d3;
+  --color-lilac: #cdbef5;
+  --color-mint: #bfe8d6;
+  --color-sky: #bfd9f5;
+
+  /* Typographies */
+  --font-display: 'Syne', 'Arial Black', system-ui, sans-serif;
+  --font-sans: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --font-hand: 'Caveat', 'Segoe Print', 'Comic Sans MS', cursive;
+  --font-syne: 'Syne', 'Space Grotesk', system-ui, sans-serif;
+
+  /* Ombres */
+  --shadow-sticker: 0 1px 0 rgb(0 0 0 / 0.15), 0 6px 14px -6px rgb(0 0 0 / 0.45);
+  --shadow-book: 0 40px 80px -30px rgb(0 0 0 / 0.65), 0 18px 30px -18px rgb(0 0 0 / 0.5);
+
+  /* Durées */
+  --animate-duration-flip: 540ms;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply font-sans text-ink antialiased;
+    background-color: var(--color-desk);
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: var(--color-magenta);
+    color: white;
+  }
+}
+
+/* ------------------------------------------------------------------
+ * Utilities papier (réutilisées par SpreadBase à l'étape 2/3)
+ * ------------------------------------------------------------------ */
+@utility paper-grid {
+  background-color: var(--color-paper);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-grid) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-grid) 70%, transparent) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+
+/* ------------------------------------------------------------------
+ * Échelle typographique unique (carnet + feuilles volantes)
+ * Tailles exprimées en px « de conception » du carnet, qui est ensuite
+ * mis à l'échelle. Les éléments hors carnet (feuille volante) portent
+ * .ui-scaled, qui applique le même facteur (--ui-scale, posé par la
+ * scène) : un texte a donc la même taille à l'écran partout.
+ * ------------------------------------------------------------------ */
+:root {
+  --ui-scale: 1;
+  --fs-display: 46px;
+  --fs-title: 28px;
+  --fs-body: 10.5px;
+  --fs-caption: 8.5px;
+  --fs-hand: 14px;
+}
+
+.ui-scaled {
+  --fs-display: calc(46px * var(--ui-scale));
+  --fs-title: calc(28px * var(--ui-scale));
+  --fs-body: calc(10.5px * var(--ui-scale));
+  --fs-caption: calc(8.5px * var(--ui-scale));
+  --fs-hand: calc(14px * var(--ui-scale));
+}
+
+/* Grand titre de couverture uniquement */
+@utility t-display {
+  font-family: var(--font-syne);
+  font-weight: 800;
+  font-size: var(--fs-display);
+  line-height: 0.9;
+}
+/* Titres de page / de fiche */
+@utility t-title {
+  font-family: var(--font-syne);
+  font-weight: 800;
+  font-size: var(--fs-title);
+  line-height: 1.05;
+}
+/* Texte courant (la famille reste celle de l'élément : sans par défaut) */
+@utility t-body {
+  font-size: var(--fs-body);
+  line-height: 1.55;
+}
+/* Légendes, sous-titres, métadonnées, étiquettes, tags */
+@utility t-caption {
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+}
+/* Annotations manuscrites */
+@utility t-hand {
+  font-family: var(--font-hand);
+  font-size: var(--fs-hand);
+  line-height: 1.15;
+}
+
+/* Apparition de la fiche d'index du sommaire */
+@keyframes index-in {
+  from { opacity: 0; transform: translateY(-6px) rotate(-3deg); }
+  to { opacity: 1; transform: translateY(0) rotate(-1deg); }
+}
+
+/* Plan de ville imprimé sous le bureau */
+@utility desk-map {
+  background-color: var(--color-desk);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cg fill='none' stroke='%23d9d1c1' stroke-linecap='round'%3E%3Cpath d='M-20 90 C140 60 260 160 540 120' stroke-width='11'/%3E%3Cpath d='M70 -20 C95 170 40 300 110 540' stroke-width='9'/%3E%3Cpath d='M-20 370 C180 340 320 410 540 350' stroke-width='8'/%3E%3Cpath d='M320 -20 C290 150 400 280 370 540' stroke-width='10'/%3E%3Cpath d='M-20 240 L540 280' stroke-width='4'/%3E%3Cpath d='M190 -20 L240 540' stroke-width='4'/%3E%3Cpath d='M440 -20 L490 540' stroke-width='3'/%3E%3Cpath d='M-20 470 L540 440' stroke-width='3'/%3E%3C/g%3E%3Cg fill='none' stroke='%23f6f2ea' stroke-linecap='round'%3E%3Cpath d='M-20 90 C140 60 260 160 540 120' stroke-width='4'/%3E%3Cpath d='M70 -20 C95 170 40 300 110 540' stroke-width='3'/%3E%3Cpath d='M-20 370 C180 340 320 410 540 350' stroke-width='3'/%3E%3Cpath d='M320 -20 C290 150 400 280 370 540' stroke-width='4'/%3E%3C/g%3E%3Cg fill='%23e3dccd'%3E%3Crect x='120' y='150' width='40' height='26' rx='3'/%3E%3Crect x='390' y='190' width='30' height='44' rx='3'/%3E%3Crect x='230' y='300' width='52' height='22' rx='3'/%3E%3Crect x='20' y='420' width='36' height='30' rx='3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 520px 520px;
+}
+
+/* Page lignée de carnet */
+@utility ruled-paper {
+  background-color: var(--color-page);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 21px,
+    color-mix(in srgb, var(--color-rule) 55%, transparent) 21px 22px
+  );
+  background-position: 0 38px;
+}
+
+@utility text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+  paint-order: stroke fill;
+}
+
+@utility halftone {
+  background-image: radial-gradient(circle, rgb(0 0 0 / 0.35) 1px, transparent 1.4px);
+  background-size: 6px 6px;
+}
+
+/* ------------------------------------------------------------------
+ * DA Destroy / Punk Zine
+ * ------------------------------------------------------------------ */
+.chrome-text {
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 46%, #64748b 54%, #f8fafc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65));
+}
+
+.outline-vertical-text {
+  color: transparent;
+  -webkit-text-stroke: 1.3px rgba(30, 36, 51, 0.72);
+  writing-mode: vertical-rl;
+}
+
+.paper-grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.65;
+}
+
+.halftone-dots {
+  background-image: radial-gradient(#13141a 1.15px, transparent 1.15px);
+  background-size: 6px 6px;
+}
+
+.torn-paper-card {
+  clip-path: polygon(
+    0% 1.2%, 14% 0%, 29% 1.4%, 48% 0.2%, 67% 1.3%, 84% 0.1%, 100% 1.4%,
+    99.3% 26%, 100% 54%, 99.1% 81%, 100% 99%,
+    83% 100%, 64% 98.8%, 45% 100%, 24% 98.9%, 0.6% 99.7%,
+    0% 74%, 0.9% 46%, 0% 21%
+  );
+}
+
+/* ------------------------------------------------------------------
+ * Mécanique du carnet
+ * ------------------------------------------------------------------ */
+.fan-spread-item {
+  transition:
+    transform 550ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 450ms ease,
+    opacity 420ms ease;
+  will-change: transform;
+}
+
+.flip-stage-3d {
+  perspective: 2200px;
+  transform-style: preserve-3d;
+}
+
+.leaf-3d-wrapper {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.leaf-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes leaf-turn-next {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-180deg); }
+}
+
+@keyframes leaf-turn-prev {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(180deg); }
+}
+
+/* Ombre qui balaie la feuille pendant qu'elle se soulève */
+@keyframes leaf-shade {
+  0% { opacity: 0; }
+  50% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+
+.animate-leaf-next {
+  transform-origin: left center;
+  animation: leaf-turn-next 620ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
+}
+
+.animate-leaf-prev {
+  transform-origin: right center;
+  animation: leaf-turn-prev 620ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
+}
+
+.leaf-shade {
+  animation: leaf-shade 620ms ease-in-out forwards;
+}
+
+/* Coin corné au survol des demi-pages */
+.page-curl-right,
+.page-curl-left {
+  opacity: 0.45;
+  transition: opacity 300ms ease, background 300ms ease;
+}
+.page-curl-right {
+  border-bottom-right-radius: 20px;
+  background: linear-gradient(315deg, rgba(120, 96, 60, 0.36) 0%, rgba(235, 231, 218, 0.94) 24%, rgba(255, 255, 255, 0.96) 28%, rgba(15, 23, 42, 0.14) 33%, transparent 42%);
+}
+.group\/right:hover .page-curl-right {
+  opacity: 1;
+  background: linear-gradient(315deg, rgba(120, 96, 60, 0.52) 0%, rgba(232, 228, 214, 0.98) 38%, rgba(255, 255, 255, 1) 43%, rgba(15, 23, 42, 0.22) 48%, transparent 58%);
+}
+.page-curl-left {
+  border-bottom-left-radius: 20px;
+  background: linear-gradient(45deg, rgba(120, 96, 60, 0.36) 0%, rgba(235, 231, 218, 0.94) 24%, rgba(255, 255, 255, 0.96) 28%, rgba(15, 23, 42, 0.14) 33%, transparent 42%);
+}
+.group\/left:hover .page-curl-left {
+  opacity: 1;
+  background: linear-gradient(45deg, rgba(120, 96, 60, 0.52) 0%, rgba(232, 228, 214, 0.98) 38%, rgba(255, 255, 255, 1) 43%, rgba(15, 23, 42, 0.22) 48%, transparent 58%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fan-spread-item { transition: none; }
+}
