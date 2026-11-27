@@ -188,8 +188,44 @@ export interface MoodboardContent {
 }
 
 export interface ContactContent {
+  /** Grand titre de la page (ex. « Travaillons ensemble »). */
+  title: string;
   kicker: string;
   thanks: string;
+}
+
+/** Page « Projets » (index des projets). */
+export interface ProjectsPageContent {
+  intro: string;
+}
+
+/** Une offre de la page « Services ». */
+export interface ServiceItem {
+  id: string;
+  title: string;
+  /** Ex. « à partir de 800 € » (facultatif). */
+  price: string;
+  description: string;
+  details: string[];
+}
+
+export interface ServicesContent {
+  intro: string;
+  items: ServiceItem[];
+}
+
+/** Page « Doodles » : dessins et croquis déposés librement. */
+export interface DoodlesContent {
+  intro: string;
+  items: ImageAsset[];
+}
+
+/** Footer caché : copyright + documents légaux. */
+export interface LegalContent {
+  /** Ex. « @marieso ». */
+  owner: string;
+  mentions: string;
+  cgv: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -235,12 +271,30 @@ export interface MoreInfo {
   tools?: string[];
 }
 
+/** Home (titre, signature, manifeste). */
 export interface CoverSpread extends SpreadCommon {
   kind: 'cover';
 }
+export interface AboutSpread extends SpreadCommon {
+  kind: 'about';
+}
+export interface ExperienceSpread extends SpreadCommon {
+  kind: 'experience';
+}
+export interface ProjectsSpread extends SpreadCommon {
+  kind: 'projects';
+}
+export interface ServicesSpread extends SpreadCommon {
+  kind: 'services';
+}
+export interface DoodlesSpread extends SpreadCommon {
+  kind: 'doodles';
+}
+/** Ancien format (v1) : converti en « Doodles » au chargement. */
 export interface MoodboardSpread extends SpreadCommon {
   kind: 'moodboard';
 }
+/** Ancien format (v1) : converti en « À propos » + « Expériences » au chargement. */
 export interface ProfileSpread extends SpreadCommon {
   kind: 'profile';
 }
@@ -254,7 +308,17 @@ export interface ContactSpread extends SpreadCommon {
   featuredArticleId?: string;
 }
 
-export type Spread = CoverSpread | MoodboardSpread | ProfileSpread | ProjectSpread | ContactSpread;
+export type Spread =
+  | CoverSpread
+  | AboutSpread
+  | ExperienceSpread
+  | ProjectsSpread
+  | ProjectSpread
+  | ServicesSpread
+  | ContactSpread
+  | DoodlesSpread
+  | MoodboardSpread
+  | ProfileSpread;
 export type SpreadKind = Spread['kind'];
 
 /* ------------------------------------------------------------------ */
@@ -318,13 +382,18 @@ export interface DeskItem {
 /* ------------------------------------------------------------------ */
 
 export interface PortfolioContent {
-  schemaVersion: 1;
+  /** 2 = structure Home / À propos / Expériences / Projets / Services / Contact / Doodles. */
+  schemaVersion: 1 | 2;
   updatedAt: string; // ISO 8601
   settings: SketchbookSettings;
   author: Author;
   cover: CoverContent;
   moodboard: MoodboardContent;
   contact: ContactContent;
+  projectsPage: ProjectsPageContent;
+  services: ServicesContent;
+  doodles: DoodlesContent;
+  legal: LegalContent;
   articles: ProjectArticle[];
   /** Ordre de lecture du carnet. */
   spreads: Spread[];

@@ -21,11 +21,16 @@ import { SpreadMetaForm } from './SpreadMetaForm';
 import { btnPrimary, btnSecondary } from './formFields';
 
 const KIND_LABEL: Record<SpreadKind, string> = {
-  cover: 'Intro',
-  moodboard: 'Lab',
-  profile: 'Profil',
-  project: 'Article',
+  cover: 'Home',
+  about: 'À propos',
+  experience: 'Expériences',
+  projects: 'Projets',
+  project: 'Projet',
+  services: 'Services',
   contact: 'Contact',
+  doodles: 'Doodles',
+  moodboard: 'Lab (ancien)',
+  profile: 'Profil (ancien)',
 };
 
 const TABS: { tab: DrawerTab; label: string }[] = [

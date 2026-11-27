@@ -100,6 +100,19 @@ export function SettingsPanel() {
         </button>
       </Section>
 
+      <Section title="Footer & légal">
+        <Field label="Nom affiché dans le footer" hint="Ex. « © 2026 @marieso — Tous droits réservés ».">
+          <TextInput value={content.legal.owner} placeholder="@marieso" onChange={(v) => edit((c) => void (c.legal.owner = v))} />
+        </Field>
+        <Field label="Mentions légales">
+          <TextArea rows={7} value={content.legal.mentions} onChange={(v) => edit((c) => void (c.legal.mentions = v))} />
+        </Field>
+        <Field label="Conditions générales de vente (CGV)">
+          <TextArea rows={7} value={content.legal.cgv} onChange={(v) => edit((c) => void (c.legal.cgv = v))} />
+        </Field>
+        <p className="text-[11px] text-[#8A6A48]">Les liens n'apparaissent dans le footer que si le document est rempli. Survole le « © » en bas de l'écran pour le voir.</p>
+      </Section>
+
       <Section title="Zone sensible">
         {confirmReset ? (
           <div className="flex flex-wrap items-center gap-2">

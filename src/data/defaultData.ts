@@ -1,4 +1,4 @@
-import type { HexColor, PortfolioContent, ProjectArticle } from '@/types/portfolio';
+import type { HexColor, PortfolioContent, ProjectArticle, Spread } from '@/types/portfolio';
 
 /* Palette néon — source unique côté JS (miroir des tokens CSS). */
 export const NEON = {
@@ -59,8 +59,64 @@ function blankArticle(
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Pages du carnet                                                     */
+/* ------------------------------------------------------------------ */
+
+type StructuralKind = 'cover' | 'about' | 'experience' | 'projects' | 'services' | 'contact' | 'doodles';
+
+/** Nom et couleur d'onglet de chaque page structurelle (teintes terreuses). */
+export const PAGE_META: Record<StructuralKind, { id: string; label: string; color: HexColor }> = {
+  cover: { id: 'sp-cover', label: 'Home', color: '#9E3B32' },
+  about: { id: 'sp-about', label: 'À propos', color: '#B8893A' },
+  experience: { id: 'sp-experience', label: 'Expériences', color: '#4E6B34' },
+  projects: { id: 'sp-projects', label: 'Projets', color: '#2C4A6E' },
+  services: { id: 'sp-services', label: 'Services', color: '#6B4A8E' },
+  contact: { id: 'sp-contact', label: 'Contact', color: '#3A2414' },
+  doodles: { id: 'sp-doodles', label: 'Doodles', color: '#C0703A' },
+};
+
+const pageBase = (label: string, color: HexColor) => ({
+  day: '',
+  dateLabel: '',
+  label,
+  edgeWord: label,
+  tabLabel: label,
+  tabColor: color,
+  tabText: '#FFFFFF' as HexColor,
+  tabRotate: 0,
+  edgeLeftColor: color,
+  edgeRightColor: color,
+  swatches: [] as HexColor[],
+});
+
+/** Double-page structurelle vierge (Home, À propos, …). */
+export function structuralSpread(kind: StructuralKind): Spread {
+  const m = PAGE_META[kind];
+  return { id: m.id, kind, ...pageBase(m.label, m.color) } as Spread;
+}
+
+/** Double-page d'un projet (sans onglet : on y accède depuis « Projets »). */
+export function projectSpread(id: string, articleId: string): Spread {
+  return { id, kind: 'project', articleId, ...pageBase('', PAGE_META.projects.color), hideTab: true };
+}
+
+/** Ordre de lecture par défaut. */
+export const DEFAULT_SPREADS: Spread[] = [
+  structuralSpread('cover'),
+  structuralSpread('about'),
+  structuralSpread('experience'),
+  structuralSpread('projects'),
+  projectSpread('sp-neon-riot', 'neon-riot'),
+  projectSpread('sp-hex-os', 'hex-os'),
+  projectSpread('sp-shadow-net', 'shadow-net'),
+  structuralSpread('services'),
+  structuralSpread('contact'),
+  structuralSpread('doodles'),
+];
+
 export const DEFAULT_CONTENT: PortfolioContent = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   updatedAt: '2026-11-27T00:00:00.000Z',
 
   settings: {
@@ -80,7 +136,7 @@ export const DEFAULT_CONTENT: PortfolioContent = {
         { id: 'cov-stamp-3', kind: 'preset', preset: 'postmark-tokyo', alt: '', x: 58, y: 74, width: 120, rotate: -8, style: 'plain' },
       ],
     },
-    startSpreadId: 'sp-profile',
+    startSpreadId: 'sp-cover',
     background: { preset: 'neutral', image: { src: '', alt: '' }, grid: false, imageDim: 0.15, imageBlur: 0 },
   },
 
@@ -122,128 +178,23 @@ export const DEFAULT_CONTENT: PortfolioContent = {
   },
 
   contact: {
+    title: '',
     kicker: '',
     thanks: '',
   },
 
+  projectsPage: { intro: '' },
+  services: { intro: '', items: [] },
+  doodles: { intro: '', items: [] },
+  legal: { owner: '@marieso', mentions: '', cgv: '' },
+
   articles: [
-    blankArticle('neon-riot', '#FF1E7A', '#B8FF00'),
-    blankArticle('hex-os', '#00E5FF', '#FFB800'),
-    blankArticle('shadow-net', '#B8FF00', '#FF1E7A', 'dark-punk-left'),
-    blankArticle('kinetic-zine', '#8B5CF6', '#FF5E3A'),
+    blankArticle('neon-riot', '#2C4A6E', '#B8893A'),
+    blankArticle('hex-os', '#2C4A6E', '#B8893A'),
+    blankArticle('shadow-net', '#2C4A6E', '#B8893A'),
   ],
 
-  spreads: [
-    {
-      id: 'sp-cover',
-      kind: 'cover',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#FF1E7A',
-      tabText: '#FFFFFF',
-      tabRotate: -2.5,
-      edgeLeftColor: '#FF1E7A',
-      edgeRightColor: '#FFB800',
-      swatches: ['#13141A', '#FF1E7A', '#00E5FF', '#B8FF00', '#FFB800'],
-    },
-    {
-      id: 'sp-lab',
-      kind: 'moodboard',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#00E5FF',
-      tabText: '#13141A',
-      tabRotate: 1.5,
-      edgeLeftColor: '#00E5FF',
-      edgeRightColor: '#FF5E3A',
-      swatches: ['#181920', '#E53E2E', '#FFB800', '#3B82F6', '#B8FF00'],
-    },
-    {
-      id: 'sp-profile',
-      kind: 'profile',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#FFD400',
-      tabText: '#13141A',
-      tabRotate: -1.2,
-      edgeLeftColor: '#8B5CF6',
-      edgeRightColor: '#B8FF00',
-      swatches: ['#13141A', '#FF5E3A', '#1F6F6D', '#8B5CF6', '#B8FF00'],
-    },
-    {
-      id: 'sp-neon-riot',
-      kind: 'project',
-      articleId: 'neon-riot',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#B8FF00',
-      tabText: '#13141A',
-      tabRotate: 2,
-      edgeLeftColor: '#FF1E7A',
-      edgeRightColor: '#FF1E7A',
-      swatches: ['#13141A', '#FF1E7A', '#B8FF00', '#00E5FF', '#F4F2EA'],
-    },
-    {
-      id: 'sp-hex-os',
-      kind: 'project',
-      articleId: 'hex-os',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#A855F7',
-      tabText: '#FFFFFF',
-      tabRotate: -1.8,
-      edgeLeftColor: '#00E5FF',
-      edgeRightColor: '#00E5FF',
-      swatches: ['#0D1118', '#00E5FF', '#FFB800', '#8B5CF6', '#F4F2EA'],
-    },
-    {
-      id: 'sp-shadow-net',
-      kind: 'project',
-      articleId: 'shadow-net',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#FF6B35',
-      tabText: '#FFFFFF',
-      tabRotate: 1.4,
-      edgeLeftColor: '#B8FF00',
-      edgeRightColor: '#B8FF00',
-      swatches: ['#13141A', '#B8FF00', '#FF1E7A', '#7C3AED', '#F4F2EA'],
-    },
-    {
-      id: 'sp-contact',
-      kind: 'contact',
-      featuredArticleId: 'kinetic-zine',
-      day: '',
-      dateLabel: '',
-      label: '',
-      edgeWord: '',
-      tabLabel: '',
-      tabColor: '#18181B',
-      tabText: '#FFFFFF',
-      tabRotate: -2,
-      edgeLeftColor: '#FFB800',
-      edgeRightColor: '#8B5CF6',
-      swatches: ['#1A1B22', '#FF5E3A', '#FFB800', '#8B5CF6', '#22C55E'],
-    },
-  ],
+  spreads: DEFAULT_SPREADS,
 
   deskItems: [],
 };

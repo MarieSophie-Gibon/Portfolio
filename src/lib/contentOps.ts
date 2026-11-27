@@ -110,7 +110,7 @@ export function relabelProjects(c: PortfolioContent) {
     if (s.kind !== 'project') continue;
     const i = c.articles.findIndex((a) => a.id === s.articleId);
     const a = c.articles[i];
-    if (a) s.label = `${String(i + 1).padStart(2, '0')} · ${a.title}`;
+    if (a) s.label = a.title ? `${String(i + 1).padStart(2, '0')} · ${a.title}` : '';
   }
 }
 
@@ -125,7 +125,7 @@ function syncArticleOrder(c: PortfolioContent) {
   relabelProjects(c);
 }
 
-/** Crée un article + sa double-page (insérée avant la page Contact). Retourne l'id du spread. */
+/** Crée un article + sa double-page (après le dernier projet, sinon après la page Projets). Retourne l'id du spread. */
 export function createArticle(c: PortfolioContent, v: ArticleFormValues): string {
   const article: ProjectArticle = {
     id: uid('art'),
@@ -173,8 +173,13 @@ export function createArticle(c: PortfolioContent, v: ArticleFormValues): string
   };
   applyForm(article, spread, v);
   c.articles.push(article);
-  const contactAt = c.spreads.findIndex((s) => s.kind === 'contact');
-  c.spreads.splice(contactAt >= 0 ? contactAt : c.spreads.length, 0, spread);
+  // Après le dernier projet ; sinon juste après l'index « Projets » ; sinon avant Services / Contact.
+  const lastProject = c.spreads.map((s) => s.kind).lastIndexOf('project');
+  const indexAt = c.spreads.findIndex((s) => s.kind === 'projects');
+  const beforeAt = c.spreads.findIndex((s) => s.kind === 'services' || s.kind === 'contact');
+  const at = lastProject >= 0 ? lastProject + 1 : indexAt >= 0 ? indexAt + 1 : beforeAt >= 0 ? beforeAt : c.spreads.length;
+  spread.hideTab = true; // accessible depuis la page « Projets » et le sommaire
+  c.spreads.splice(at, 0, spread);
   syncArticleOrder(c);
   return spread.id;
 }

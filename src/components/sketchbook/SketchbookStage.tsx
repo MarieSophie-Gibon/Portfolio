@@ -14,6 +14,8 @@ import { TopNav } from './TopNav';
 import { LogoSticker } from './LogoSticker';
 import { BookCover, OpenCoverBoards } from './BookCover';
 import { MorePanel, type MoreTarget } from './MorePanel';
+import { HiddenFooter } from './HiddenFooter';
+import { DoodlesSketchbook } from './DoodlesSketchbook';
 import { AddStickerButton, DeskItemsLayer, StickerLayer, newStickerId } from './DeskItemsLayer';
 
 /* ------------------------------------------------------------------ */
@@ -21,8 +23,9 @@ import { AddStickerButton, DeskItemsLayer, StickerLayer, newStickerId } from './
 /* ------------------------------------------------------------------ */
 
 const HEADER_H = 40; // simple marge haute (plus de titre) : laisse la place au logo et au menu
-const DOCK_H = 22; // marge basse (plus de dock : le bouton Dessiner flotte en bas à droite)
+const DOCK_H = 84; // marge basse : de l'air sous le carnet + place pour la languette du footer
 const TABS_H = 40;
+const BOARDS_H = 40; // débord des plats en cuir autour des pages (haut + bas)
 
 /* Éventail : décalage, échelle, ombrage et z-index par profondeur (1..4). */
 const FAN = {
@@ -68,7 +71,8 @@ function computeLayout(w: number, h: number, single: boolean) {
     const bookH = clamp(availH / scale, BOOK_H, BOOK_H * SINGLE_MAX_STRETCH);
     return { scale, fanFactor: 0, bookH };
   }
-  const availH = h - HEADER_H - DOCK_H - TABS_H - 6;
+  // BOARDS_H : les plats en cuir dépassent des pages en haut et en bas.
+  const availH = h - HEADER_H - DOCK_H - TABS_H - BOARDS_H - 6;
   const mobile = w < 640;
   const scale = Math.max(
     0.2,
@@ -160,7 +164,10 @@ const DRAWER_W = 420;
 
 export function SketchbookStage() {
   const { content, edit, isAdmin, editMode, drawerOpen, focusRequest, openLogin } = useAdmin();
-  const { spreads, author, settings } = content;
+  const { author, settings } = content;
+  // Les Doodles vivent dans un second carnet (en bas à droite) : hors de la lecture du carnet principal.
+  const spreads = useMemo(() => content.spreads.filter((s) => s.kind !== 'doodles'), [content.spreads]);
+  const hasDoodles = content.spreads.some((s) => s.kind === 'doodles');
   const editing = isAdmin && editMode;
   const count = spreads.length;
 
@@ -178,6 +185,9 @@ export function SketchbookStage() {
   const [hovered, setHovered] = useState<number | null>(null);
   // Feuille volante « En savoir plus » (fiche projet ou infos de la page).
   const [moreTarget, setMoreTarget] = useState<MoreTarget | null>(null);
+  const [doodlesOpen, setDoodlesOpen] = useState(false);
+  const openDoodles = useCallback(() => setDoodlesOpen(true), []);
+  const closeDoodles = useCallback(() => setDoodlesOpen(false), []);
   const openSpreadSheet = useCallback((spreadId: string) => setMoreTarget({ spreadId }), []);
   const closeMore = useCallback(() => setMoreTarget(null), []);
   const [copied, setCopied] = useState(false);
@@ -197,7 +207,7 @@ export function SketchbookStage() {
   }, [scale]);
 
   const modalOpenRef = useRef(false);
-  modalOpenRef.current = moreTarget !== null; // pas de navigation sous la feuille volante
+  modalOpenRef.current = moreTarget !== null || doodlesOpen; // pas de navigation sous une feuille / le carnet de croquis
   const editingRef = useRef(false);
   editingRef.current = editing;
 
@@ -591,7 +601,12 @@ export function SketchbookStage() {
         onAdminAccess={isAdmin ? undefined : openLogin}
         onCover={hasCover ? () => goTo(-1) : undefined}
         coverActive={closed}
+        onDoodles={hasDoodles ? openDoodles : undefined}
       />
+
+      <HiddenFooter />
+
+      {hasDoodles && <DoodlesSketchbook open={doodlesOpen} onOpen={openDoodles} onClose={closeDoodles} />}
 
       <MorePanel target={moreTarget} onClose={closeMore} />
     </div>

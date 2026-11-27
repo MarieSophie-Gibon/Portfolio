@@ -69,10 +69,12 @@ interface Props {
   /** Retour à la couverture (carnet fermé), si elle est activée. */
   onCover?: () => void;
   coverActive?: boolean;
+  /** Ouvre le second carnet (Doodles). */
+  onDoodles?: () => void;
 }
 
 /** Sommaire + Contact, à droite du logo. */
-export function TopNav({ spreads, activeIndex, onGoTo, onContact, onAdminAccess, onCover, coverActive = false }: Props) {
+export function TopNav({ spreads, activeIndex, onGoTo, onContact, onAdminAccess, onCover, coverActive = false, onDoodles }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -143,7 +145,7 @@ export function TopNav({ spreads, activeIndex, onGoTo, onContact, onAdminAccess,
               {spreads.map((s, i) => {
                 const current = i === activeIndex;
                 return (
-                  <li key={s.id}>
+                  <li key={s.id} className={s.kind === 'project' ? 'pl-4' : ''}>
                     <button
                       type="button"
                       onClick={() => {
@@ -156,7 +158,7 @@ export function TopNav({ spreads, activeIndex, onGoTo, onContact, onAdminAccess,
                       }`}
                     >
                       <span className="h-2 w-2 shrink-0 translate-y-[-1px] rounded-full ring-1 ring-black/10" style={{ backgroundColor: s.tabColor }} />
-                      <span className="truncate">{s.label}</span>
+                      <span className={`truncate ${s.kind === 'project' ? 't-caption italic' : ''}`}>{s.label || s.tabLabel || (s.kind === 'project' ? 'Projet sans titre' : 'Sans titre')}</span>
                       <span className="mx-1 min-w-4 flex-1 translate-y-[-3px] border-b-2 border-dotted border-ink/20" />
                       <span className="t-hand shrink-0 text-gold">{s.day}</span>
                     </button>
@@ -164,6 +166,20 @@ export function TopNav({ spreads, activeIndex, onGoTo, onContact, onAdminAccess,
                 );
               })}
             </ol>
+            {onDoodles && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onDoodles();
+                }}
+                className="t-body mt-2 flex w-full items-baseline gap-2 rounded-sm border-t border-dashed border-ink/15 px-1 pb-0.5 pt-2 text-left transition-colors hover:bg-butter/50"
+              >
+                <span className="h-2 w-2 shrink-0 -translate-y-px rounded-[2px] bg-[#B08A5E] ring-1 ring-black/10" />
+                <span className="truncate">Doodles</span>
+                <span className="t-hand ml-auto shrink-0 text-gold">carnet de croquis ↘</span>
+              </button>
+            )}
             {onAdminAccess && (
               <button
                 type="button"
