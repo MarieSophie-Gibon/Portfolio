@@ -1,4 +1,5 @@
 import { DEFAULT_CONTENT } from '@/data/defaultData';
+import { migrateToV2 } from '@/lib/migrate';
 import type { PortfolioContent } from '@/types/portfolio';
 
 /* ==================================================================
@@ -56,7 +57,9 @@ function mergeDefaults<T>(defaults: T, value: unknown): T {
 
 export function normalizeContent(raw: unknown): PortfolioContent {
   if (!isPlain(raw) || !Array.isArray(raw.spreads)) return structuredClone(DEFAULT_CONTENT);
-  return mergeDefaults(structuredClone(DEFAULT_CONTENT), raw);
+  // Un contenu sans version est un contenu v1 (avant la nouvelle suite de pages).
+  const merged = mergeDefaults(structuredClone(DEFAULT_CONTENT), { schemaVersion: 1, ...raw });
+  return migrateToV2(merged);
 }
 
 /* ------------------------------------------------------------------ */

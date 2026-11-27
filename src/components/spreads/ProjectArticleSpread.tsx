@@ -1,6 +1,6 @@
 import type { SpreadParts } from '@/components/sketchbook/SpreadBase';
 import { EditableText } from '@/components/admin/EditableText';
-import { LightningSticker } from '@/components/sketchbook/DestroyDecorations';
+import { ShowIf, filled } from '@/components/admin/ShowIf';
 import type { ProjectArticle } from '@/types/portfolio';
 import { ScrapbookCollage } from './ScrapbookCollage';
 import { editArticle, projectNumber, type SpreadCtx } from './spreadContext';
@@ -18,7 +18,8 @@ export function renderProjectArticle(ctx: SpreadCtx, article: ProjectArticle | u
   }
 
   const num = projectNumber(ctx.content, article.id);
-  const tinted = article.layout === 'dark-punk-left';
+  // Fond teinté seulement s'il y a des médias (page neutre quand vide).
+  const tinted = article.layout === 'dark-punk-left' && filled(article.coverImage.src, article.gallery);
   const edit = (fn: (a: ProjectArticle) => void) => editArticle(ctx, article.id, fn);
   const set = (k: TextKey) => (v: string) => edit((a) => void (a[k] = v));
 
@@ -30,14 +31,17 @@ export function renderProjectArticle(ctx: SpreadCtx, article: ProjectArticle | u
       >
         <ScrapbookCollage article={article} edit={edit} onOpen={() => ctx.openProject(article.id)} />
       </div>
-      <p className="t-hand pl-1 font-bold text-ink/75 -rotate-1">
-        ↳ <EditableText value={article.doodleNote} onSave={set('doodleNote')} />
-      </p>
+      <ShowIf has={filled(article.doodleNote)}>
+        <p className="t-hand pl-1 font-bold text-ink/75 -rotate-1">
+          ↳ <EditableText value={article.doodleNote} onSave={set('doodleNote')} />
+        </p>
+      </ShowIf>
     </div>
   );
 
   const right = (
     <div className="relative flex h-full flex-col">
+      <ShowIf has={filled(article.title, article.year)}>
       <div className="flex items-start justify-between gap-2 pt-3">
         <span
           className="t-caption inline-block rounded-[3px] px-2 py-0.5 font-mono font-bold tracking-widest"
@@ -45,8 +49,8 @@ export function renderProjectArticle(ctx: SpreadCtx, article: ProjectArticle | u
         >
           PROJET {num} · <EditableText value={article.year} onSave={set('year')} />
         </span>
-        <LightningSticker color={article.accentSecondary} className="h-10 w-8 shrink-0 rotate-12" />
       </div>
+      </ShowIf>
 
       <h2
         className="t-title mt-2 font-syne font-extrabold text-ink"
@@ -58,7 +62,9 @@ export function renderProjectArticle(ctx: SpreadCtx, article: ProjectArticle | u
         <EditableText value={article.subtitle} onSave={set('subtitle')} multiline />
       </p>
 
-      <div className="my-4 h-px w-16 bg-ink/20" />
+      <ShowIf has={filled(article.summary)}>
+        <div className="my-4 h-px w-16 bg-ink/20" />
+      </ShowIf>
 
       <p className="t-body font-sans text-ink/85">
         <EditableText value={article.summary} onSave={set('summary')} multiline placeholder="Une ou deux phrases pour présenter le projet…" />
@@ -75,7 +81,9 @@ export function renderProjectArticle(ctx: SpreadCtx, article: ProjectArticle | u
       <p className="t-caption mt-auto pb-1 text-right font-mono tracking-wide text-ink/50">
         <EditableText value={article.client} onSave={set('client')} />
       </p>
-      <p className="t-hand pb-1 text-right text-gold">toutes les infos dans la fiche ↓</p>
+      <ShowIf has={filled(article.summary, article.challenge, article.solution, article.gallery, article.coverImage.src)}>
+        <p className="t-hand pb-1 text-right text-gold">toutes les infos dans la fiche ↓</p>
+      </ShowIf>
     </div>
   );
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowUpRight, ExternalLink, ImagePlus, X } from 'lucide-react';
+import { ArrowUpRight, ExternalLink, ImagePlus, Maximize2, Play, X } from 'lucide-react';
 import { useAdmin } from '@/context/AdminContext';
 import { EditableList, EditableText, ItemTools, useCanEdit } from '@/components/admin/EditableText';
 import { EditableImage, ImagePickerDialog } from '@/components/admin/EditableImage';
@@ -8,6 +8,7 @@ import { getMoreInfo } from '@/lib/moreInfo';
 import type { ImageAsset, MoreInfo, ProjectArticle, Spread } from '@/types/portfolio';
 import { GithubIcon } from './BrandIcons';
 import { ArtworkPresetSVG } from './Illustrations';
+import { MediaLightbox } from './MediaLightbox';
 
 const SLIDE_MS = 480;
 
@@ -27,12 +28,43 @@ function SectionTitle({ children }: { children: ReactNode }) {
 
 const bodyCls = 't-body font-sans text-ink/85';
 
+/** Vignette qui ouvre le carrousel plein écran (clic en visite, bouton ⤢ en édition). */
+function Zoomable({ asset, canEdit, onOpen, children }: { asset: ImageAsset; canEdit: boolean; onOpen?: () => void; children: ReactNode }) {
+  if (!onOpen || !asset.src) return <>{children}</>;
+  return (
+    <div className="group/zoom relative">
+      {children}
+      {!canEdit && (
+        <button type="button" onClick={onOpen} aria-label="Voir en plein écran" className="absolute inset-0 cursor-zoom-in" />
+      )}
+      {asset.type === 'video' && (
+        <span className="pointer-events-none absolute inset-0 m-auto flex h-9 w-9 items-center justify-center rounded-full bg-ink/60 text-white">
+          <Play className="h-4 w-4 fill-white" />
+        </span>
+      )}
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        aria-label="Voir en plein écran"
+        className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 shadow transition-opacity group-hover/zoom:opacity-100 focus-visible:opacity-100"
+      >
+        <Maximize2 className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
 function Polaroids({
   items,
   canEdit,
   onChange,
   onRemove,
   onAdd,
+  onOpen,
   lead,
 }: {
   items: ImageAsset[];
@@ -40,6 +72,8 @@ function Polaroids({
   onChange: (i: number, next: ImageAsset) => void;
   onRemove: (i: number) => void;
   onAdd: () => void;
+  /** Ouvre le carrousel sur la i-ème image de `items`. */
+  onOpen: (i: number) => void;
   /** Visuel placé en premier (ex. image principale du projet). */
   lead?: ReactNode;
 }) {
@@ -53,9 +87,11 @@ function Polaroids({
           className="bg-white p-1.5 pb-0.5 shadow-[0_8px_16px_-8px_rgba(20,60,80,0.5)]"
           style={{ transform: `rotate(${i % 2 ? 1.5 : -1.5}deg)` }}
         >
-          <EditableImage value={img} allowRemove={false} allowVideo onSave={(next) => onChange(i, next)}>
-            <MediaView asset={img} controls={img.type === 'video'} className="aspect-[4/3] w-full object-cover" />
-          </EditableImage>
+          <Zoomable asset={img} canEdit={canEdit} onOpen={() => onOpen(i)}>
+            <EditableImage value={img} allowRemove={false} allowVideo onSave={(next) => onChange(i, next)}>
+              <MediaView asset={img} className="aspect-[4/3] w-full object-cover" />
+            </EditableImage>
+          </Zoomable>
           <figcaption className="t-hand flex items-center justify-center gap-1 truncate py-0.5 text-center text-slate-600">
             <EditableText value={img.caption ?? ''} placeholder="légende…" onSave={(v) => onChange(i, { ...img, caption: v })} />
             <ItemTools onRemove={() => onRemove(i)} />
@@ -66,7 +102,7 @@ function Polaroids({
         <button
           type="button"
           onClick={onAdd}
-          className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-slate-300 text-slate-400 hover:border-magenta hover:text-magenta"
+          className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-slate-300 text-slate-400 hover:border-[#B8893A] hover:text-[#8E2F2A]"
         >
           <ImagePlus className="h-4 w-4" />
           <span className="t-caption font-mono">photo / vidéo</span>
@@ -94,7 +130,22 @@ function Chips({ items, onSave }: { items: string[]; onSave: (items: string[]) =
 /* Fiche projet                                                        */
 /* ------------------------------------------------------------------ */
 
-function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddMedia: () => void }) {
+/** Médias visibles dans le carrousel d'un projet : image principale (si fournie) + galerie. */
+export function projectMedia(article: ProjectArticle): ImageAsset[] {
+  return [...(article.coverImage.src ? [article.coverImage] : []), ...article.gallery];
+}
+
+/** Feuille paysage : deux colonnes séparées par une marge rose (une seule sur petit écran). */
+function TwoColumns({ left, right }: { left: ReactNode; right: ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-2">
+      <div className="min-w-0">{left}</div>
+      <div className="min-w-0 lg:border-l lg:border-rose-300/60 lg:pl-10 lg:pt-1">{right}</div>
+    </div>
+  );
+}
+
+function ProjectSheet({ article, onAddMedia, onOpen }: { article: ProjectArticle; onAddMedia: () => void; onOpen: (i: number) => void }) {
   const { edit } = useAdmin();
   const canEdit = useCanEdit();
   const editA = (fn: (a: ProjectArticle) => void) =>
@@ -108,22 +159,26 @@ function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddM
 
   const lead = (
     <figure className="bg-white p-1.5 pb-0.5 shadow-[0_8px_16px_-8px_rgba(20,60,80,0.5)]" style={{ transform: 'rotate(-1deg)' }}>
-      <EditableImage value={article.coverImage} allowVideo onSave={(img) => editA((a) => void (a.coverImage = img))}>
-        {article.coverImage.src ? (
-          <MediaView asset={article.coverImage} controls={article.coverImage.type === 'video'} className="aspect-[4/3] w-full object-cover" />
-        ) : article.artwork ? (
-          <div className="flex aspect-[4/3] w-full items-center overflow-hidden bg-zinc-100">
-            <ArtworkPresetSVG preset={article.artwork} />
-          </div>
-        ) : (
-          <div className="halftone-dots aspect-[4/3] w-full" style={{ backgroundColor: article.accent }} />
-        )}
-      </EditableImage>
+      <Zoomable asset={article.coverImage} canEdit={canEdit} onOpen={() => onOpen(0)}>
+        <EditableImage value={article.coverImage} allowVideo onSave={(img) => editA((a) => void (a.coverImage = img))}>
+          {article.coverImage.src ? (
+            <MediaView asset={article.coverImage} className="aspect-[4/3] w-full object-cover" />
+          ) : article.artwork ? (
+            <div className="flex aspect-[4/3] w-full items-center overflow-hidden bg-zinc-100">
+              <ArtworkPresetSVG preset={article.artwork} />
+            </div>
+          ) : (
+            <div className="halftone-dots aspect-[4/3] w-full" style={{ backgroundColor: article.accent }} />
+          )}
+        </EditableImage>
+      </Zoomable>
       <figcaption className="t-hand py-0.5 text-center text-slate-600">{article.shortTag}</figcaption>
     </figure>
   );
 
-  return (
+  const coverOffset = article.coverImage.src ? 1 : 0;
+
+  const left = (
     <>
       <h2 className="t-title mt-4 text-ink">
         <EditableText value={article.title} onSave={set('title')} />
@@ -158,8 +213,13 @@ function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddM
         onChange={(i, next) => editA((a) => void (a.gallery[i] = next))}
         onRemove={(i) => editA((a) => void a.gallery.splice(i, 1))}
         onAdd={onAddMedia}
+        onOpen={(i) => onOpen(i + coverOffset)}
       />
+    </>
+  );
 
+  const right = (
+    <>
       <SectionTitle>Description</SectionTitle>
       <div className={bodyCls}>
         <EditableText value={article.summary} onSave={set('summary')} multiline />
@@ -192,7 +252,7 @@ function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddM
             <ul className={`${bodyCls} list-none`}>
               {article.deliverables.map((d) => (
                 <li key={d}>
-                  <span className="mr-1.5 text-magenta">✦</span>
+                  <span className="mr-1.5 text-[#8E2F2A]">✦</span>
                   {d}
                 </li>
               ))}
@@ -207,7 +267,7 @@ function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddM
           <div className="mt-1 grid grid-cols-3 gap-2">
             {article.stats.map((st, i) => (
               <div key={i} className="rounded-md border border-ink/10 bg-white px-2 py-1 text-center">
-                <div className="t-body font-syne font-extrabold text-ink">
+                <div className="t-body t-fantasy font-extrabold text-ink">
                   <EditableText value={st.value} onSave={(v) => editA((a) => void (a.stats[i].value = v))} />
                 </div>
                 <div className="t-caption font-mono uppercase tracking-wider text-slate-500">
@@ -232,7 +292,7 @@ function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddM
             target="_blank"
             rel="noreferrer"
             onClick={(e) => canEdit && e.preventDefault()}
-            className="t-caption inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 font-mono font-bold text-white hover:bg-magenta"
+            className="t-caption inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 font-mono font-bold text-white hover:bg-[#8E2F2A]"
           >
             <GithubIcon className="h-3.5 w-3.5" /> GitHub
           </a>
@@ -262,13 +322,15 @@ function ProjectSheet({ article, onAddMedia }: { article: ProjectArticle; onAddM
       )}
     </>
   );
+
+  return <TwoColumns left={left} right={right} />;
 }
 
 /* ------------------------------------------------------------------ */
 /* Feuille générique (autres pages)                                    */
 /* ------------------------------------------------------------------ */
 
-function GenericSheet({ spread, info, onAddMedia }: { spread: Spread; info: MoreInfo; onAddMedia: () => void }) {
+function GenericSheet({ spread, info, onAddMedia, onOpen }: { spread: Spread; info: MoreInfo; onAddMedia: () => void; onOpen: (i: number) => void }) {
   const { edit } = useAdmin();
   const canEdit = useCanEdit();
   const editMore = (fn: (m: MoreInfo) => void) =>
@@ -281,7 +343,7 @@ function GenericSheet({ spread, info, onAddMedia }: { spread: Spread; info: More
   const tools = info.tools ?? [];
   const isEmpty = !info.body && !info.images.length && !info.links.length && !tools.length;
 
-  return (
+  const left = (
     <>
       <h2 className="t-title mt-4 text-ink">
         <EditableText value={info.title} onSave={(v) => editMore((m) => void (m.title = v))} />
@@ -293,7 +355,11 @@ function GenericSheet({ spread, info, onAddMedia }: { spread: Spread; info: More
           <EditableText value={info.body} placeholder="Écris ici les informations supplémentaires…" multiline onSave={(v) => editMore((m) => void (m.body = v))} />
         )}
       </div>
+    </>
+  );
 
+  const right = (
+    <>
       {(info.images.length > 0 || canEdit) && (
         <>
           <SectionTitle>Images</SectionTitle>
@@ -303,6 +369,7 @@ function GenericSheet({ spread, info, onAddMedia }: { spread: Spread; info: More
             onChange={(i, next) => editMore((m) => void (m.images[i] = next))}
             onRemove={(i) => editMore((m) => void m.images.splice(i, 1))}
             onAdd={onAddMedia}
+            onOpen={onOpen}
           />
         </>
       )}
@@ -337,7 +404,7 @@ function GenericSheet({ spread, info, onAddMedia }: { spread: Spread; info: More
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => canEdit && e.preventDefault()}
-                    className="inline-flex items-center gap-1 underline decoration-blush decoration-2 underline-offset-2 hover:text-magenta"
+                    className="inline-flex items-center gap-1 underline decoration-blush decoration-2 underline-offset-2 hover:text-[#8E2F2A]"
                   >
                     {l.label} <ArrowUpRight className="h-3 w-3" />
                   </a>
@@ -350,6 +417,8 @@ function GenericSheet({ spread, info, onAddMedia }: { spread: Spread; info: More
       )}
     </>
   );
+
+  return <TwoColumns left={left} right={right} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -367,6 +436,7 @@ export function MorePanel({ target, onClose }: Props) {
   const [shown, setShown] = useState<MoreTarget | null>(target);
   const [visible, setVisible] = useState(false);
   const [addingMedia, setAddingMedia] = useState(false);
+  const [zoomIndex, setZoomIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (target) {
@@ -375,6 +445,7 @@ export function MorePanel({ target, onClose }: Props) {
       return () => cancelAnimationFrame(raf);
     }
     setVisible(false);
+    setZoomIndex(null);
     const t = window.setTimeout(() => setShown(null), SLIDE_MS);
     return () => window.clearTimeout(t);
   }, [target]);
@@ -397,6 +468,7 @@ export function MorePanel({ target, onClose }: Props) {
   const article = articleId ? content.articles.find((a) => a.id === articleId) : undefined;
   const info = getMoreInfo(spread, content);
   const title = article?.title ?? info.title;
+  const media = (article ? projectMedia(article) : info.images).filter((m) => m.src);
 
   const addMedia = (img: ImageAsset) => {
     if (!img.src) return;
@@ -424,10 +496,11 @@ export function MorePanel({ target, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="ui-scaled absolute top-[4vh] bottom-[4vh] right-[3vw]"
+        className="ui-scaled absolute inset-x-0 top-[4vh] bottom-[4vh] mx-auto"
         style={{
-          width: 'min(calc(500px * var(--ui-scale)), 94vw)', // largeur suit l'échelle du texte
-          transform: visible ? 'translateX(0) rotate(-0.8deg)' : 'translateX(calc(100% + 8vw)) rotate(5deg)',
+          // Format paysage (2 colonnes) ; la largeur suit l'échelle du texte.
+          width: 'min(calc(1040px * var(--ui-scale)), 96vw)',
+          transform: visible ? 'translateX(0) rotate(-0.4deg)' : 'translateX(calc(50vw + 100%)) rotate(5deg)',
           transition: `transform ${SLIDE_MS}ms cubic-bezier(0.22, 1.15, 0.36, 1)`,
         }}
       >
@@ -470,13 +543,15 @@ export function MorePanel({ target, onClose }: Props) {
             </div>
 
             {article ? (
-              <ProjectSheet article={article} onAddMedia={() => setAddingMedia(true)} />
+              <ProjectSheet article={article} onAddMedia={() => setAddingMedia(true)} onOpen={setZoomIndex} />
             ) : (
-              <GenericSheet spread={spread} info={info} onAddMedia={() => setAddingMedia(true)} />
+              <GenericSheet spread={spread} info={info} onAddMedia={() => setAddingMedia(true)} onOpen={setZoomIndex} />
             )}
           </div>
         </div>
       </aside>
+
+      <MediaLightbox items={media} index={zoomIndex} onIndex={setZoomIndex} onClose={() => setZoomIndex(null)} />
 
       {addingMedia && (
         <ImagePickerDialog value={{ src: '', alt: '' }} allowRemove={false} allowVideo onClose={() => setAddingMedia(false)} onSave={addMedia} />

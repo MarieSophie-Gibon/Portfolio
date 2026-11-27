@@ -1,205 +1,318 @@
+import type { ReactNode } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import type { SpreadParts } from '@/components/sketchbook/SpreadBase';
 import { AddItemButton, EditableList, EditableText, ItemTools } from '@/components/admin/EditableText';
 import { EditableImage } from '@/components/admin/EditableImage';
-import { GrungeStaples, MetallicPaperclip, SpikyMascotSticker, WashiTape } from '@/components/sketchbook/DestroyDecorations';
-import { PunkAvatarSVG } from '@/components/sketchbook/Illustrations';
+import { ShowIf, filled } from '@/components/admin/ShowIf';
 import { uid } from '@/lib/contentOps';
 import type { Author } from '@/types/portfolio';
 import { projectNumber, stop, type SpreadCtx } from './spreadContext';
 
-export function renderProfileExperience(ctx: SpreadCtx): SpreadParts {
-  const { author, articles } = ctx.content;
-  const editAuthor = (fn: (a: Author) => void) => ctx.edit((c) => fn(c.author));
-  const setAuthor = (k: 'name' | 'location' | 'bio' | 'role') => (v: string) => editAuthor((a) => void (a[k] = v));
+/* ==================================================================
+ * Pages « À propos » et « Expériences » — sobres, écrites à l'encre sur
+ * le parchemin : titres en capitales gravées, filets fins, aucun décor.
+ * Les blocs ci-dessous sont partagés par les deux pages.
+ * ================================================================== */
 
-  return {
-    left: (
-      <div className="relative h-full flex flex-col justify-between gap-1.5">
-        {/* Carte HELLO! + portrait clipsé */}
-        <div className="relative bg-[#C5D3B8] border-2 border-ink p-2.5 shadow-[4px_4px_0_#13141A] torn-paper-card" style={{ transform: 'rotate(-1.2deg)' }}>
-          <WashiTape variant="duct" className="absolute -top-2 right-5 w-14 h-3.5 z-20" rotate={6} />
-          <div className="flex items-start gap-2.5">
-            <div
-              className="relative w-20 shrink-0 bg-white p-1 pb-2 border-2 border-ink shadow-[3px_3px_0_rgba(0,0,0,0.4)] -mt-1 -ml-1"
-              style={{ transform: 'rotate(-5deg)' }}
-            >
-              <MetallicPaperclip className="absolute -top-4 left-1 w-4 h-9 z-20" rotate={-10} />
-              <EditableImage value={author.avatar} onSave={(img) => editAuthor((a) => void (a.avatar = img))} className="overflow-hidden border border-ink/30">
-                {author.avatar.src ? (
-                  <img src={author.avatar.src} alt={author.avatar.alt} draggable={false} className="block w-full aspect-square object-cover" />
-                ) : (
-                  <PunkAvatarSVG />
-                )}
-              </EditableImage>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="t-title font-syne font-extrabold tracking-tight text-[#FF5E3A] drop-shadow-[2px_2px_0_#13141A]">HELLO!</div>
-              <div className="t-caption mt-1 space-y-0.5 font-mono text-ink">
-                <div className="border-b border-dashed border-ink/60">
-                  <span className="font-bold">NOM :</span>{' '}
-                  <span className="t-hand font-bold text-rose-800">
-                    <EditableText value={author.name} onSave={setAuthor('name')} />
-                  </span>
+export const INK = 'text-[#2E1C0E]';
+export const INK_SOFT = 'text-[#5A3B22]';
+export const INK_MUTE = 'text-[#8A6A48]';
+
+/** Titre de section : capitales gravées + filet fin. */
+export function Heading({ children, big = false }: { children: ReactNode; big?: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      <h3 className={`t-fantasy shrink-0 uppercase tracking-[0.14em] ${big ? 't-title' : 't-caption'} ${INK}`}>{children}</h3>
+      <span className="h-px flex-1 bg-[#8E6A3E]/35" />
+    </div>
+  );
+}
+
+const editAuthorOf = (ctx: SpreadCtx) => (fn: (a: Author) => void) => ctx.edit((c) => fn(c.author));
+
+/** Portrait + nom + métier + lieu + disponibilité. */
+function Identity({ ctx, large = false }: { ctx: SpreadCtx; large?: boolean }) {
+  const { author } = ctx.content;
+  const editAuthor = editAuthorOf(ctx);
+  const set = (k: 'name' | 'location' | 'role' | 'availability') => (v: string) => editAuthor((a) => void (a[k] = v));
+  return (
+    <ShowIf has={filled(author.name, author.location, author.role, author.avatar.src)}>
+      <section className={large ? 'flex flex-col items-start gap-4' : 'flex items-start gap-3.5'}>
+        <ShowIf has={author.avatar.src}>
+          <div className={`${large ? 'w-44' : 'w-20'} shrink-0 rotate-[-2deg] bg-[#FBF7EE] p-1.5 pb-3 shadow-[0_10px_18px_-10px_rgba(40,20,5,0.6)]`}>
+            <EditableImage value={author.avatar} onSave={(img) => editAuthor((a) => void (a.avatar = img))} className="overflow-hidden">
+              {author.avatar.src ? (
+                <img src={author.avatar.src} alt={author.avatar.alt} draggable={false} className="block aspect-square w-full object-cover" />
+              ) : (
+                <div className={`t-caption flex aspect-square w-full items-center justify-center border border-dashed border-[#8E6A3E]/40 font-mono ${INK_MUTE}`}>
+                  PHOTO
                 </div>
-                <div className="border-b border-dashed border-ink/60">
-                  <span className="font-bold">BASE :</span> <EditableText value={author.location} onSave={setAuthor('location')} />
-                </div>
-              </div>
-            </div>
+              )}
+            </EditableImage>
           </div>
-          <p className="t-body mt-1.5 font-sans text-ink">
-            <EditableText value={author.bio} onSave={setAuthor('bio')} multiline />
+        </ShowIf>
+        <div className="min-w-0">
+          <p className={`t-title t-fantasy ${INK}`}>
+            <EditableText value={author.name} onSave={set('name')} placeholder="Ton nom" />
           </p>
+          <p className={`t-body mt-0.5 ${INK_SOFT}`}>
+            <EditableText value={author.role} onSave={set('role')} placeholder="Ton métier" />
+          </p>
+          <p className={`t-caption mt-1 font-mono uppercase tracking-[0.16em] ${INK_MUTE}`}>
+            <EditableText value={author.location} onSave={set('location')} placeholder="Ville, pays" />
+          </p>
+          <ShowIf has={author.availability}>
+            <p className="t-hand mt-2 text-[#4E6B34]">
+              ✦ <EditableText value={author.availability} onSave={set('availability')} placeholder="Disponibilité" />
+            </p>
+          </ShowIf>
         </div>
+      </section>
+    </ShowIf>
+  );
+}
 
-        {/* Formation */}
-        <div className="relative bg-[#1F6F6D] text-[#F4F2EA] p-2 border-2 border-ink shadow-[3px_3px_0_#13141A]" style={{ transform: 'rotate(0.8deg)' }}>
-          <WashiTape variant="checker" className="absolute -top-2 right-3 w-12 h-3" rotate={6} />
-          <GrungeStaples className="absolute top-1.5 left-1.5" rotate={-12} />
-          <div className="t-caption font-syne font-extrabold tracking-wider text-amber-200 uppercase pl-5">Formation</div>
+function Bio({ ctx }: { ctx: SpreadCtx }) {
+  const { author } = ctx.content;
+  const editAuthor = editAuthorOf(ctx);
+  return (
+    <ShowIf has={author.bio}>
+      <section>
+        <Heading>À propos</Heading>
+        <p className={`t-body mt-2 font-sans ${INK_SOFT}`}>
+          <EditableText value={author.bio} onSave={(v) => editAuthor((a) => void (a.bio = v))} multiline placeholder="Quelques mots sur toi…" />
+        </p>
+      </section>
+    </ShowIf>
+  );
+}
+
+function Skills({ ctx }: { ctx: SpreadCtx }) {
+  const { author } = ctx.content;
+  const editAuthor = editAuthorOf(ctx);
+  return (
+    <ShowIf has={author.skills.length}>
+      <section>
+        <Heading>Compétences</Heading>
+        <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+          {author.skills.map((sk, i) => (
+            <li key={sk.id} className="t-body flex items-center gap-1">
+              <span className={sk.highlight ? 'text-[#B8893A]' : INK_MUTE}>✦</span>
+              <span className={sk.highlight ? `font-semibold ${INK}` : INK_SOFT}>
+                <EditableText value={sk.label} onSave={(v) => editAuthor((a) => void (a.skills[i].label = v))} />
+              </span>
+              <ItemTools
+                toggled={sk.highlight}
+                onToggle={() => editAuthor((a) => void (a.skills[i].highlight = !a.skills[i].highlight))}
+                onRemove={() => editAuthor((a) => void a.skills.splice(i, 1))}
+              />
+            </li>
+          ))}
+        </ul>
+        <AddItemButton
+          label="compétence"
+          className="mt-1 w-fit"
+          onClick={() => editAuthor((a) => void a.skills.push({ id: uid('sk'), label: 'Nouvelle compétence', highlight: false }))}
+        />
+      </section>
+    </ShowIf>
+  );
+}
+
+function Education({ ctx }: { ctx: SpreadCtx }) {
+  const { author } = ctx.content;
+  const editAuthor = editAuthorOf(ctx);
+  return (
+    <ShowIf has={author.education.length}>
+      <section>
+        <Heading>Formation</Heading>
+        <ul className="mt-1.5 space-y-1">
           {author.education.map((ed, i) => (
-            <div key={ed.id} className="t-body mt-0.5">
-              <span className="t-caption font-mono text-lime font-bold mr-1">
+            <li key={ed.id} className="t-body flex items-baseline gap-2">
+              <span className={`t-caption shrink-0 font-mono ${INK_MUTE}`}>
                 <EditableText value={ed.period} onSave={(v) => editAuthor((a) => void (a.education[i].period = v))} />
               </span>
-              <span className="font-semibold text-white">
+              <span className={`min-w-0 flex-1 font-semibold ${INK}`}>
                 <EditableText value={ed.degree} onSave={(v) => editAuthor((a) => void (a.education[i].degree = v))} />
+                <ShowIf has={ed.school}>
+                  <span className={`font-normal ${INK_MUTE}`}>
+                    {' — '}
+                    <EditableText value={ed.school} onSave={(v) => editAuthor((a) => void (a.education[i].school = v))} placeholder="École" />
+                  </span>
+                </ShowIf>
               </span>
               <ItemTools onRemove={() => editAuthor((a) => void a.education.splice(i, 1))} />
-            </div>
+            </li>
           ))}
-          <AddItemButton
-            label="formation"
-            className="mt-1"
-            onClick={() => editAuthor((a) => void a.education.push({ id: uid('ed'), period: '20XX', degree: 'Diplôme', school: '' }))}
-          />
-        </div>
+        </ul>
+        <AddItemButton
+          label="formation"
+          className="mt-1"
+          onClick={() => editAuthor((a) => void a.education.push({ id: uid('ed'), period: '20XX', degree: 'Diplôme', school: '' }))}
+        />
+      </section>
+    </ShowIf>
+  );
+}
 
-        {/* Compétences */}
-        <div className="relative bg-violet text-white p-2 pl-4 border-2 border-ink shadow-[4px_4px_0_#13141A]" style={{ transform: 'rotate(-2.1deg)' }}>
-          <SpikyMascotSticker className="absolute -left-4 -top-4 w-11 h-11 -rotate-12 z-20" />
-          <div className="flex items-center justify-between mb-0.5 pl-4">
-            <span className="t-caption font-syne font-extrabold text-ink bg-lime px-1.5">LIST OF SKILLS</span>
-            <span className="t-hand text-yellow-200">outils ✦</span>
-          </div>
-          <div className="grid grid-cols-1 gap-0.5 pl-4">
-            {author.skills.map((sk, i) => (
-              <div key={sk.id} className="t-body flex items-center gap-1">
-                <span className="t-caption font-mono text-lime font-bold">{String(i + 1).padStart(2, '0')}.</span>
-                <span className={sk.highlight ? 'bg-white text-violet-900 px-1 font-semibold' : 'text-white'}>
-                  <EditableText value={sk.label} onSave={(v) => editAuthor((a) => void (a.skills[i].label = v))} />
-                </span>
-                <ItemTools
-                  toggled={sk.highlight}
-                  onToggle={() => editAuthor((a) => void (a.skills[i].highlight = !a.skills[i].highlight))}
-                  onRemove={() => editAuthor((a) => void a.skills.splice(i, 1))}
-                />
-              </div>
-            ))}
-            <AddItemButton
-              label="compétence"
-              className="mt-0.5 w-fit"
-              onClick={() => editAuthor((a) => void a.skills.push({ id: uid('sk'), label: 'Nouvelle compétence', highlight: false }))}
-            />
-          </div>
-        </div>
+/** Expériences [from, to) — permet de répartir la liste sur deux pages. */
+function Experiences({ ctx, from = 0, to, withTitle = true }: { ctx: SpreadCtx; from?: number; to?: number; withTitle?: boolean }) {
+  const { author } = ctx.content;
+  const editAuthor = editAuthorOf(ctx);
+  const list = author.experiences.slice(from, to);
+  const isLastChunk = to === undefined || to >= author.experiences.length;
+  if (!list.length && !withTitle) return null;
+  return (
+    <ShowIf has={author.experiences.length}>
+      <section className="min-h-0">
+        {withTitle && <Heading big>Expériences</Heading>}
+        <ol className={`${withTitle ? 'mt-3' : ''} space-y-3`}>
+          {list.map((exp, k) => {
+            const i = from + k;
+            const setExp = (key: 'period' | 'badge' | 'title' | 'company') => (v: string) => editAuthor((a) => void (a.experiences[i][key] = v));
+            return (
+              <li key={exp.id} className="border-l border-[#8E6A3E]/35 pl-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className={`t-caption font-mono ${INK_MUTE}`}>
+                    <EditableText value={exp.period} onSave={setExp('period')} />
+                  </span>
+                  <span className="flex items-center">
+                    <span className={`t-caption t-fantasy uppercase tracking-[0.1em] ${INK_MUTE}`}>
+                      <EditableText value={exp.badge} onSave={setExp('badge')} placeholder="Rôle" />
+                    </span>
+                    <ItemTools onRemove={() => editAuthor((a) => void a.experiences.splice(i, 1))} />
+                  </span>
+                </div>
+                <p className={`t-body mt-0.5 font-semibold ${INK}`}>
+                  <EditableText value={exp.title} onSave={setExp('title')} />
+                  <ShowIf has={exp.company}>
+                    <span className={`font-normal ${INK_SOFT}`}>
+                      {' · '}
+                      <EditableText value={exp.company} onSave={setExp('company')} />
+                    </span>
+                  </ShowIf>
+                </p>
+                <EditableList items={exp.bullets} onSave={(items) => editAuthor((a) => void (a.experiences[i].bullets = items))} className="t-body mt-1">
+                  <ul className="mt-1 space-y-0.5">
+                    {exp.bullets.map((b, j) => (
+                      <li key={j} className={`t-body flex gap-1.5 ${INK_SOFT}`}>
+                        <span className={`shrink-0 ${INK_MUTE}`}>–</span>
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </EditableList>
+              </li>
+            );
+          })}
+        </ol>
+        {isLastChunk && (
+          <AddItemButton
+            label="expérience"
+            className="mt-2"
+            onClick={() =>
+              editAuthor(
+                (a) =>
+                  void a.experiences.push({
+                    id: uid('xp'),
+                    period: '20XX – 20XX',
+                    title: 'Poste',
+                    company: 'Entreprise',
+                    badge: '',
+                    bullets: ['Une réalisation marquante.'],
+                  }),
+              )
+            }
+          />
+        )}
+      </section>
+    </ShowIf>
+  );
+}
+
+/** Liste courte des projets (titre cliquable). */
+function ProjectLinks({ ctx }: { ctx: SpreadCtx }) {
+  const listed = ctx.content.articles.filter((a) => filled(a.title));
+  if (!listed.length) return null;
+  return (
+    <section className="mt-auto">
+      <Heading>Projets</Heading>
+      <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
+        {listed.map((a) => (
+          <li key={a.id}>
+            <button
+              type="button"
+              onClick={(e) => {
+                stop(e);
+                ctx.goToArticle(a.id);
+              }}
+              className={`t-body group inline-flex max-w-full items-center gap-1 text-left ${INK} hover:text-[#8E5A1E]`}
+            >
+              <span className={`t-caption font-mono ${INK_MUTE}`}>{projectNumber(ctx.content, a.id)}</span>
+              <span className="truncate underline decoration-[#8E6A3E]/35 underline-offset-2 group-hover:decoration-[#B8893A]">{a.title}</span>
+              <ArrowUpRight className="h-3 w-3 shrink-0 opacity-60" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Pages                                                               */
+/* ------------------------------------------------------------------ */
+
+/** À propos : identité (portrait) à gauche ; bio + compétences à droite. */
+export function renderAbout(ctx: SpreadCtx): SpreadParts {
+  return {
+    left: (
+      <div className="relative flex h-full flex-col justify-center">
+        <Identity ctx={ctx} large />
       </div>
     ),
     right: (
-      <div className="relative h-full w-full flex items-center justify-center">
-        <div
-          className="relative w-full h-full bg-white text-ink p-3 shadow-[0_12px_26px_-14px_rgba(20,60,80,0.45)] flex flex-col justify-between border border-ink/10 torn-paper-card"
-          style={{ transform: 'rotate(1.4deg)' }}
-        >
-          <WashiTape variant="pink" className="absolute -top-2 left-5 w-14 h-3.5 z-20" rotate={-6} />
-          <WashiTape variant="duct" className="absolute -bottom-1.5 right-6 w-16 h-3.5 z-20" rotate={4} />
+      <div className="relative flex h-full flex-col gap-5 pt-2">
+        <Bio ctx={ctx} />
+        <Skills ctx={ctx} />
+      </div>
+    ),
+  };
+}
 
-          <div className="text-center border-b border-dashed border-ink/15 pb-1.5">
-            <h2 className="t-title font-syne font-extrabold tracking-tight text-ink [text-shadow:3px_3px_0_#CDBEF5]">EXPERIENCE</h2>
-            <div className="t-caption inline-block mt-1 px-2 py-0.5 bg-magenta text-white font-mono font-bold tracking-[0.16em] uppercase -rotate-1">
-              <EditableText value={author.role} onSave={setAuthor('role')} />
-            </div>
-          </div>
+/** Expériences : la liste à gauche (3 premières), la suite + la formation à droite. */
+const LEFT_COUNT = 3;
+export function renderExperience(ctx: SpreadCtx): SpreadParts {
+  return {
+    left: (
+      <div className="relative flex h-full flex-col">
+        <Experiences ctx={ctx} to={LEFT_COUNT} />
+      </div>
+    ),
+    right: (
+      <div className="relative flex h-full flex-col gap-5 pt-2">
+        <Experiences ctx={ctx} from={LEFT_COUNT} withTitle={false} />
+        <Education ctx={ctx} />
+      </div>
+    ),
+  };
+}
 
-          <div className="space-y-1.5 my-1 min-h-0 overflow-hidden">
-            {author.experiences.map((exp, i) => {
-              const setExp = (k: 'period' | 'badge' | 'title' | 'company') => (v: string) => editAuthor((a) => void (a.experiences[i][k] = v));
-              return (
-                <div key={exp.id} className="bg-[#FBF8F1] border border-dashed border-ink/15 rounded-md p-2">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="t-caption font-mono text-sky-700 font-bold">
-                      <EditableText value={exp.period} onSave={setExp('period')} />
-                    </span>
-                    <span className="flex items-center">
-                      <span className="t-caption px-1.5 bg-lilac text-violet-900 font-mono font-bold">
-                        <EditableText value={exp.badge} onSave={setExp('badge')} />
-                      </span>
-                      <ItemTools onRemove={() => editAuthor((a) => void a.experiences.splice(i, 1))} />
-                    </span>
-                  </div>
-                  <div className="t-body font-syne font-bold text-ink mt-0.5">
-                    <EditableText value={exp.title} onSave={setExp('title')} />{' '}
-                    <span className="text-magenta">
-                      @ <EditableText value={exp.company} onSave={setExp('company')} />
-                    </span>
-                  </div>
-                  <EditableList items={exp.bullets} onSave={(items) => editAuthor((a) => void (a.experiences[i].bullets = items))} className="t-body mt-1">
-                    <ul className="mt-1 space-y-0.5">
-                      {exp.bullets.map((b, j) => (
-                        <li key={j} className="t-body text-zinc-600 flex gap-1">
-                          <span className="text-magenta shrink-0">✖</span>
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </EditableList>
-                </div>
-              );
-            })}
-            <AddItemButton
-              label="expérience"
-              onClick={() =>
-                editAuthor(
-                  (a) =>
-                    void a.experiences.push({
-                      id: uid('xp'),
-                      period: '20XX – 20XX',
-                      title: 'Poste',
-                      company: 'ENTREPRISE',
-                      badge: 'BADGE',
-                      bullets: ['Une réalisation marquante.'],
-                    }),
-                )
-              }
-            />
-          </div>
-
-          <div className="bg-[#FBF8F1] border border-ink/10 rounded-md p-1.5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="t-caption font-mono font-bold tracking-widest text-ink/70">PROJETS // INDEX</span>
-              <span className="t-hand text-magenta">ouvrir ↓</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              {articles.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={(e) => {
-                    stop(e);
-                    ctx.goToArticle(a.id);
-                  }}
-                  className="text-left flex items-center justify-between gap-1 px-1.5 py-1 bg-white hover:bg-blush border border-ink/15 rounded transition-colors"
-                >
-                  <span className="t-caption font-syne font-bold text-ink truncate">
-                    {projectNumber(ctx.content, a.id)} {a.title}
-                  </span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+/** Ancien format v1 (« Profil ») — conservé pour compatibilité. */
+export function renderProfileExperience(ctx: SpreadCtx): SpreadParts {
+  return {
+    left: (
+      <div className="relative flex h-full flex-col gap-4">
+        <Identity ctx={ctx} />
+        <Bio ctx={ctx} />
+        <Education ctx={ctx} />
+        <Skills ctx={ctx} />
+      </div>
+    ),
+    right: (
+      <div className="relative flex h-full flex-col gap-3">
+        <Experiences ctx={ctx} />
+        <ProjectLinks ctx={ctx} />
       </div>
     ),
   };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Spread } from '@/types/portfolio';
-import { ColorInput, Field, Section, TextInput } from './formFields';
+import { ColorInput, Field, Section, TextInput, btnPrimary, btnSecondary, stickyActions } from './formFields';
 
 type Meta = Pick<Spread, 'label' | 'day' | 'dateLabel' | 'tabLabel' | 'tabColor' | 'edgeWord' | 'edgeLeftColor' | 'edgeRightColor' | 'hideTab'>;
 
@@ -66,16 +66,16 @@ export function SpreadMetaForm({ spread, onSubmit, onCancel }: Props) {
             <ColorInput value={m.tabColor} onChange={(x) => set('tabColor', x)} />
           </Field>
         </div>
-        <label className="flex items-center gap-2 text-sm text-zinc-300">
-          <input type="checkbox" checked={m.hideTab} onChange={(e) => set('hideTab', e.target.checked)} className="accent-magenta" />
+        <label className="flex items-center gap-2 text-sm text-[#4A2E18]">
+          <input type="checkbox" checked={m.hideTab} onChange={(e) => set('hideTab', e.target.checked)} className="accent-[#8E2F2A]" />
           Masquer l'intercalaire
         </label>
       </Section>
-      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-white/10 bg-[#14161F] px-4 py-3">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-white/10 text-sm hover:bg-white/20">
+      <div className={stickyActions}>
+        <button type="button" onClick={onCancel} className={btnSecondary}>
           Annuler
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-magenta text-sm font-semibold hover:brightness-110">
+        <button type="submit" className={btnPrimary}>
           Enregistrer
         </button>
       </div>

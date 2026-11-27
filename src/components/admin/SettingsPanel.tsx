@@ -4,7 +4,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { DEFAULT_CONTENT } from '@/data/defaultData';
 import { uid } from '@/lib/contentOps';
 import type { SocialIcon } from '@/types/portfolio';
-import { ColorInput, Field, Section, Select, TextArea, TextInput } from './formFields';
+import { Checkbox, ColorInput, Field, Section, Select, TextArea, TextInput, btnDanger, btnSecondary } from './formFields';
 
 const ICONS: { value: SocialIcon; label: string }[] = [
   { value: 'github', label: 'GitHub' },
@@ -21,7 +21,7 @@ export function SettingsPanel() {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-zinc-500">Les changements s'appliquent en direct ; clique sur « Publier » pour les enregistrer.</p>
+      <p className="text-xs text-[#8A6A48]">Les changements s'appliquent en direct ; clique sur « Publier » pour les enregistrer.</p>
 
       <Section title="Carnet">
         <Field label="Titre du carnet (en-tête)">
@@ -37,24 +37,16 @@ export function SettingsPanel() {
       </Section>
 
       <Section title="Couverture">
-        <label className="flex items-center gap-2 text-sm text-zinc-300">
-          <input
-            type="checkbox"
-            checked={settings.cover.enabled}
-            onChange={(e) => edit((c) => void (c.settings.cover.enabled = e.target.checked))}
-            className="accent-magenta"
-          />
+        <Checkbox checked={settings.cover.enabled} onChange={(v) => edit((c) => void (c.settings.cover.enabled = v))}>
           Afficher le carnet fermé (couverture) au chargement
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Couleur de la couverture">
-            <ColorInput value={settings.cover.color} onChange={(v) => edit((c) => void (c.settings.cover.color = v))} />
-          </Field>
-          <Field label="Couleur de l'élastique">
-            <ColorInput value={settings.cover.strap} onChange={(v) => edit((c) => void (c.settings.cover.strap = v))} />
-          </Field>
-        </div>
-        <p className="text-[11px] text-zinc-500">Titre, sous-titre, image et stickers se modifient directement sur la couverture (mode édition).</p>
+        </Checkbox>
+        <Field label="Couleur du cuir" hint="Cuir clair : titre gravé en creux. Cuir sombre : titre doré.">
+          <ColorInput value={settings.cover.color} onChange={(v) => edit((c) => void (c.settings.cover.color = v))} />
+        </Field>
+        <p className="text-[11px] text-[#8A6A48]">
+          Titre, sous-titre, pied de page et décor se modifient directement sur la couverture (mode édition). Pour les timbres : « + Sticker » → « Timbre avec
+          mon image », ou sélectionne un timbre existant puis l'icône image pour y mettre ta photo.
+        </p>
       </Section>
 
       <Section title="Identité">
@@ -90,7 +82,7 @@ export function SettingsPanel() {
               type="button"
               aria-label="Supprimer ce lien"
               onClick={() => edit((c) => void c.author.socials.splice(i, 1))}
-              className="mb-0.5 w-9 h-9 rounded-lg bg-white/10 hover:bg-magenta flex items-center justify-center"
+              className="mb-0.5 flex h-9 w-9 items-center justify-center rounded-md border border-[#8E6A3E]/35 bg-[#FBF5E6] text-[#6B4A2B] hover:bg-[#8E2F2A] hover:text-[#F7E7C6]"
             >
               <X className="w-4 h-4" />
             </button>
@@ -102,36 +94,49 @@ export function SettingsPanel() {
         <button
           type="button"
           onClick={() => edit((c) => void c.author.socials.push({ id: uid('soc'), label: 'Site', url: 'https://', icon: 'globe' }))}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-white/25 text-sm text-zinc-300 hover:border-magenta"
+          className={`${btnSecondary} border-dashed`}
         >
           <Plus className="w-4 h-4" /> Ajouter un lien
         </button>
       </Section>
 
+      <Section title="Footer & légal">
+        <Field label="Nom affiché dans le footer" hint="Ex. « © 2026 @marieso — Tous droits réservés ».">
+          <TextInput value={content.legal.owner} placeholder="@marieso" onChange={(v) => edit((c) => void (c.legal.owner = v))} />
+        </Field>
+        <Field label="Mentions légales">
+          <TextArea rows={7} value={content.legal.mentions} onChange={(v) => edit((c) => void (c.legal.mentions = v))} />
+        </Field>
+        <Field label="Conditions générales de vente (CGV)">
+          <TextArea rows={7} value={content.legal.cgv} onChange={(v) => edit((c) => void (c.legal.cgv = v))} />
+        </Field>
+        <p className="text-[11px] text-[#8A6A48]">Les liens n'apparaissent dans le footer que si le document est rempli. Survole le « © » en bas de l'écran pour le voir.</p>
+      </Section>
+
       <Section title="Zone sensible">
         {confirmReset ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-zinc-300">Remplacer tout le contenu par la démo ?</span>
+            <span className="text-sm text-[#3A2414]">Tout effacer et repartir d'un carnet vierge ?</span>
             <button
               type="button"
               onClick={() => {
                 edit((c) => Object.assign(c, structuredClone(DEFAULT_CONTENT)));
                 setConfirmReset(false);
               }}
-              className="px-3 py-1.5 rounded-lg bg-magenta text-sm font-semibold"
+              className={btnDanger}
             >
               Oui, réinitialiser
             </button>
-            <button type="button" onClick={() => setConfirmReset(false)} className="px-3 py-1.5 rounded-lg bg-white/10 text-sm">
+            <button type="button" onClick={() => setConfirmReset(false)} className={btnSecondary}>
               Non
             </button>
           </div>
         ) : (
-          <button type="button" onClick={() => setConfirmReset(true)} className="px-3 py-1.5 rounded-lg bg-white/10 text-sm hover:bg-white/20">
-            Réinitialiser avec le contenu de démo
+          <button type="button" onClick={() => setConfirmReset(true)} className={btnSecondary}>
+            Réinitialiser (carnet vierge)
           </button>
         )}
-        <p className="text-[10px] text-zinc-500">Rien n'est définitif tant que tu n'as pas cliqué sur « Publier ».</p>
+        <p className="text-[11px] text-[#8A6A48]">Rien n'est définitif tant que tu n'as pas cliqué sur « Publier ».</p>
       </Section>
     </div>
   );
