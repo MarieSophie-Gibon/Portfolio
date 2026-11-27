@@ -16,6 +16,9 @@ import { BookCover, OpenCoverBoards } from './BookCover';
 import { MorePanel, type MoreTarget } from './MorePanel';
 import { HiddenFooter } from './HiddenFooter';
 import { DoodlesSketchbook } from './DoodlesSketchbook';
+import { Passport, type PassportEntry } from './Passport';
+import { D20Roller, SHAKE_EVENT } from './D20Roller';
+import { usePassport } from '@/lib/usePassport';
 import { AddStickerButton, DeskItemsLayer, StickerLayer, newStickerId } from './DeskItemsLayer';
 
 /* ------------------------------------------------------------------ */
@@ -188,6 +191,49 @@ export function SketchbookStage() {
   const [doodlesOpen, setDoodlesOpen] = useState(false);
   const openDoodles = useCallback(() => setDoodlesOpen(true), []);
   const closeDoodles = useCallback(() => setDoodlesOpen(false), []);
+
+  /* ---------------- Passeport de voyage ---------------- */
+  const passport = usePassport();
+  const passportEntries = useMemo<PassportEntry[]>(
+    () =>
+      [...spreads.filter((s) => s.kind !== 'project' && !s.hideTab), ...content.spreads.filter((s) => s.kind === 'doodles')].map((s) => ({
+        id: s.id,
+        label: s.tabLabel || s.label || 'Page',
+        color: s.tabColor,
+      })),
+    [spreads, content.spreads],
+  );
+
+  // Tamponne la page ouverte (après le tournage) ; un projet compte aussi pour « Projets ».
+  const { stamp } = passport;
+  useEffect(() => {
+    const s = safeIndex >= 0 ? spreads[safeIndex] : undefined;
+    if (!s) return;
+    const id = s.kind === 'project' ? spreads.find((x) => x.kind === 'projects')?.id : s.id;
+    if (!id || !passportEntries.some((e) => e.id === id)) return;
+    const t = window.setTimeout(() => stamp(id), 700);
+    return () => window.clearTimeout(t);
+  }, [safeIndex, spreads, passportEntries, stamp]);
+  useEffect(() => {
+    const d = content.spreads.find((s) => s.kind === 'doodles');
+    if (doodlesOpen && d) stamp(d.id);
+  }, [doodlesOpen, content.spreads, stamp]);
+
+  /* ---------------- d20 : le carnet tremble sur un échec critique ---------------- */
+  const [shaking, setShaking] = useState(false);
+  useEffect(() => {
+    let t: number | undefined;
+    const onShake = () => {
+      setShaking(true);
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setShaking(false), 650);
+    };
+    window.addEventListener(SHAKE_EVENT, onShake);
+    return () => {
+      window.removeEventListener(SHAKE_EVENT, onShake);
+      window.clearTimeout(t);
+    };
+  }, []);
   const openSpreadSheet = useCallback((spreadId: string) => setMoreTarget({ spreadId }), []);
   const closeMore = useCallback(() => setMoreTarget(null), []);
   const [copied, setCopied] = useState(false);
@@ -492,7 +538,7 @@ export function SketchbookStage() {
         <div
           // Mode une page : remonté à chaque double-page pour jouer l'entrée (pas de flip 3D).
           key={single ? `page-${safeIndex}` : 'book'}
-          className={`pointer-events-auto relative ${single && !prefersReducedMotion() ? (navDir === 'next' ? 'animate-page-in-next' : 'animate-page-in-prev') : ''}`}
+          className={`pointer-events-auto relative ${single && !prefersReducedMotion() ? (navDir === 'next' ? 'animate-page-in-next' : 'animate-page-in-prev') : ''} ${shaking ? 'animate-book-shake' : ''}`}
           style={{ width: viewW * scale, height: bookH * scale, marginTop: single ? SINGLE_TOP : TABS_H }}
         >
           {/* Mode une page : fenêtre de la largeur d'une page sur la double-page complète. */}
@@ -605,6 +651,10 @@ export function SketchbookStage() {
       />
 
       <HiddenFooter />
+
+      {/* Petits plaisirs du bureau (coin bas gauche) */}
+      <Passport entries={passportEntries} visited={passport.visited} fresh={passport.fresh} onReset={passport.reset} />
+      <D20Roller />
 
       {hasDoodles && <DoodlesSketchbook open={doodlesOpen} onOpen={openDoodles} onClose={closeDoodles} />}
 

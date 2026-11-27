@@ -401,3 +401,52 @@
     transform: none;
   }
 }
+
+/* ------------------------------------------------------------------
+ * Petits plaisirs : tampons, dé, carnet qui tremble
+ * ------------------------------------------------------------------ */
+@keyframes stamp-thunk {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.8) rotate(-14deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-50%) scale(0.92) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) rotate(-8deg);
+  }
+}
+@keyframes passport-bump {
+  0%, 100% { transform: rotate(-8deg) translateY(0); }
+  40% { transform: rotate(-4deg) translateY(-8px); }
+}
+@keyframes d20-roll {
+  0% { transform: rotate(0) translateY(0) scale(1); }
+  35% { transform: rotate(420deg) translateY(-34px) scale(1.12); }
+  70% { transform: rotate(640deg) translateY(0) scale(0.96); }
+  85% { transform: rotate(700deg) translateY(-8px); }
+  100% { transform: rotate(720deg) translateY(0) scale(1); }
+}
+@keyframes burst {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(160deg); }
+}
+@keyframes book-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-10px) rotate(-1.2deg); }
+  30% { transform: translateX(9px) rotate(1deg); }
+  45% { transform: translateX(-7px) rotate(-0.8deg); }
+  60% { transform: translateX(5px) rotate(0.5deg); }
+  75% { transform: translateX(-3px); }
+}
+.animate-book-shake {
+  animation: book-shake 600ms ease-in-out;
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.4) rotate(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-2deg); }
+}
