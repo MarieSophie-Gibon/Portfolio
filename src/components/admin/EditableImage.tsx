@@ -54,7 +54,7 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-[#1A0F08]/60 backdrop-blur-sm p-4"
       onClick={(e) => {
         swallow(e);
         onClose();
@@ -70,11 +70,11 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
         aria-modal="true"
         aria-label="Changer l'image"
         onClick={swallow}
-        className="w-full max-w-md rounded-2xl bg-[#171A24] text-zinc-100 border border-white/15 shadow-2xl p-5"
+        className="w-full max-w-md rounded-2xl bg-[#171A24] text-[#3A2414] border border-[#8E6A3E]/35 shadow-2xl p-5"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-syne text-lg font-extrabold">{allowVideo ? 'Image ou vidéo' : "Changer l'image"}</h2>
-          <button type="button" onClick={onClose} aria-label="Fermer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <h2 className="t-fantasy text-lg font-extrabold">{allowVideo ? 'Image ou vidéo' : "Changer l'image"}</h2>
+          <button type="button" onClick={onClose} aria-label="Fermer" className="w-8 h-8 rounded-full bg-[#5A3520]/10 hover:bg-[#5A3520]/20 flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -87,7 +87,7 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           className={`relative rounded-xl border-2 border-dashed p-3 text-center transition-colors ${
-            dragOver ? 'border-cyan bg-cyan/10' : 'border-white/20 bg-white/[0.03]'
+            dragOver ? 'border-[#B8893A] bg-[#B8893A]/10' : 'border-[#8E6A3E]/40 bg-white/[0.03]'
           }`}
         >
           {src ? (
@@ -97,10 +97,10 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
               <img src={src} alt="" className="mx-auto max-h-48 rounded-lg object-contain" />
             )
           ) : (
-            <div className="py-6 text-sm text-zinc-400">{allowVideo ? 'Glisse une image ou une vidéo (mp4) ici' : 'Glisse une image ici'}</div>
+            <div className="py-6 text-sm text-[#6B4A2B]">{allowVideo ? 'Glisse une image ou une vidéo (mp4) ici' : 'Glisse une image ici'}</div>
           )}
           {busy && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60">
+            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-[#3B2416]/70">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
           )}
@@ -110,19 +110,19 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-cyan text-ink text-sm font-semibold hover:bg-white transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#B8893A] text-[#2A1A0E] text-sm font-semibold hover:brightness-110 transition-colors"
           >
             <Upload className="w-4 h-4" /> Choisir un fichier
           </button>
           {allowRemove && src && (
-            <button type="button" onClick={() => setSrc('')} className="px-3 py-2 rounded-lg bg-white/10 text-sm hover:bg-white/20">
+            <button type="button" onClick={() => setSrc('')} className="px-3 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
               Retirer l'image
             </button>
           )}
           <input ref={fileRef} type="file" accept={allowVideo ? 'image/*,video/mp4,video/webm' : 'image/*'} hidden onChange={(e) => void handleFile(e.target.files?.[0])} />
         </div>
 
-        <label className="block mt-4 text-xs text-zinc-400">
+        <label className="block mt-4 text-xs text-[#6B4A2B]">
           {allowVideo ? "… ou colle l'URL d'une image ou d'une vidéo (.mp4, .webm)" : "… ou colle l'URL d'une image"}
           <input
             type="url"
@@ -133,23 +133,23 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
               setSrc(v);
               setType(allowVideo && isVideoUrl(v) ? 'video' : 'image');
             }}
-            className="mt-1 w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 text-sm text-white outline-none focus:border-magenta"
+            className="mt-1 w-full rounded-lg bg-[#FBF5E6] border border-[#8E6A3E]/35 px-3 py-2 text-sm text-[#3A2414] outline-none focus:border-[#B8893A]"
           />
         </label>
 
-        <label className="block mt-3 text-xs text-zinc-400">
+        <label className="block mt-3 text-xs text-[#6B4A2B]">
           Texte alternatif (accessibilité)
           <input
             value={alt}
             onChange={(e) => setAlt(e.target.value)}
-            className="mt-1 w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 text-sm text-white outline-none focus:border-magenta"
+            className="mt-1 w-full rounded-lg bg-[#FBF5E6] border border-[#8E6A3E]/35 px-3 py-2 text-sm text-[#3A2414] outline-none focus:border-[#B8893A]"
           />
         </label>
 
-        {error && <p className="mt-3 text-sm text-magenta">{error}</p>}
+        {error && <p className="mt-3 text-sm text-[#8E2F2A]">{error}</p>}
 
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-white/10 text-sm hover:bg-white/20">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
             Annuler
           </button>
           <button
@@ -159,7 +159,7 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
               onSave({ ...value, src, alt, type });
               onClose();
             }}
-            className="px-4 py-2 rounded-lg bg-magenta text-white text-sm font-semibold hover:brightness-110 disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#8E2F2A] text-[#F7E7C6] text-sm font-semibold hover:brightness-110 disabled:opacity-50"
           >
             Valider
           </button>
@@ -199,9 +199,9 @@ export function EditableImage({ value, onSave, children, className = '', allowRe
           swallow(e);
           setOpen(true);
         }}
-        className="absolute inset-0 flex items-center justify-center bg-ink/0 group-hover/img:bg-ink/55 outline-dashed outline-2 outline-offset-[-2px] outline-magenta/60 transition-colors"
+        className="absolute inset-0 flex items-center justify-center bg-ink/0 group-hover/img:bg-[#3B2416]/55 outline-dashed outline-2 outline-offset-[-2px] outline-[#B8893A]/70 transition-colors"
       >
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-magenta text-white font-mono text-[9px] font-bold opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#8E2F2A] text-[#F7E7C6] font-mono text-[9px] font-bold opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg">
           <ImagePlus className="w-3 h-3" /> {allowVideo ? 'Changer le média' : "Changer l'image"}
         </span>
       </button>

@@ -66,16 +66,16 @@ export function SpreadMetaForm({ spread, onSubmit, onCancel }: Props) {
             <ColorInput value={m.tabColor} onChange={(x) => set('tabColor', x)} />
           </Field>
         </div>
-        <label className="flex items-center gap-2 text-sm text-zinc-300">
-          <input type="checkbox" checked={m.hideTab} onChange={(e) => set('hideTab', e.target.checked)} className="accent-magenta" />
+        <label className="flex items-center gap-2 text-sm text-[#4A2E18]">
+          <input type="checkbox" checked={m.hideTab} onChange={(e) => set('hideTab', e.target.checked)} className="accent-[#8E2F2A]" />
           Masquer l'intercalaire
         </label>
       </Section>
-      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-white/10 bg-[#14161F] px-4 py-3">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-white/10 text-sm hover:bg-white/20">
+      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-[#8E6A3E]/25 bg-[#14161F] px-4 py-3">
+        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
           Annuler
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-magenta text-sm font-semibold hover:brightness-110">
+        <button type="submit" className="px-4 py-2 rounded-lg bg-[#8E2F2A] text-sm font-semibold hover:brightness-110">
           Enregistrer
         </button>
       </div>

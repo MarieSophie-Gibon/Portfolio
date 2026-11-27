@@ -5,6 +5,8 @@ import type { PortfolioContent } from '@/types/portfolio';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+export type DrawerTab = 'general' | 'pages' | 'settings';
+
 interface AdminState {
   content: PortfolioContent;
   backend: api.Backend;
@@ -29,6 +31,11 @@ interface AdminState {
 
   drawerOpen: boolean;
   setDrawerOpen: (on: boolean) => void;
+  /** Onglet affiché dans le tiroir d'édition. */
+  drawerTab: DrawerTab;
+  /** Ouvre le tiroir sur un onglet (ou le ferme s'il y est déjà). */
+  toggleDrawer: (tab: DrawerTab) => void;
+  setDrawerTab: (tab: DrawerTab) => void;
 
   /** Demande à la scène d'ouvrir une double-page (nonce pour re-déclencher). */
   focusRequest: { spreadId: string; nonce: number } | null;
@@ -53,6 +60,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [editMode, setEditMode] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState<DrawerTab>('general');
+  const toggleDrawer = useCallback(
+    (tab: DrawerTab) => {
+      if (drawerOpen && drawerTab === tab) return setDrawerOpen(false);
+      setDrawerTab(tab);
+      setDrawerOpen(true);
+    },
+    [drawerOpen, drawerTab],
+  );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<AdminState['focusRequest']>(null);
@@ -179,10 +195,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         logout,
         drawerOpen,
         setDrawerOpen,
+        drawerTab,
+        toggleDrawer,
+        setDrawerTab,
         focusRequest,
         focusSpread,
       },
-    [content, backend, isAdmin, editMode, edit, dirty, save, discard, saveStatus, saveError, loginOpen, login, logout, drawerOpen, focusRequest, focusSpread],
+    [content, backend, isAdmin, editMode, edit, dirty, save, discard, saveStatus, saveError, loginOpen, login, logout, drawerOpen, drawerTab, toggleDrawer, focusRequest, focusSpread],
   );
 
   if (!loaded || !value) {

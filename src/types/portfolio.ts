@@ -94,6 +94,23 @@ export interface SketchbookSettings {
   cover: BookCoverSettings;
   /** Double-page ouverte au chargement (id de spread). */
   startSpreadId: string;
+  /** Fond du bureau derrière le carnet. */
+  background: DeskBackgroundSettings;
+}
+
+/** Fonds prêts à l'emploi ('image' = image personnalisée). */
+export type BackgroundPreset = 'neutral' | 'linen' | 'slate' | 'wood' | 'night' | 'image';
+
+export interface DeskBackgroundSettings {
+  preset: BackgroundPreset;
+  /** Image personnalisée (utilisée quand preset = 'image'). */
+  image: ImageAsset;
+  /** Quadrillage léger par-dessus le fond. */
+  grid: boolean;
+  /** Image perso : voile sombre (0..0.7). */
+  imageDim: number;
+  /** Image perso : flou en px (0 = net). */
+  imageBlur: number;
 }
 
 export interface BookCoverSettings {
@@ -254,10 +271,26 @@ export type DeskPreset =
   | 'star'
   | 'heart'
   | 'sparkle'
-  | 'paperclip';
+  | 'paperclip'
+  /* Carnet de voyage */
+  | 'stamp-fuji'
+  | 'stamp-fern'
+  | 'stamp-torii'
+  | 'postmark-tokyo'
+  | 'postmark-aotearoa'
+  /* Grimoire & rétro gaming */
+  | 'd20'
+  | 'pixel-heart'
+  | 'pixel-star'
+  | 'press-start'
+  /* Papiers (couleur + texte personnalisables) */
+  | 'paper-parchment'
+  | 'paper-ruled'
+  | 'paper-torn'
+  | 'postit';
 
-/** sticker = liseré blanc découpé · photo = cadre polaroid · plain = image brute. */
-export type DeskItemStyle = 'sticker' | 'photo' | 'plain';
+/** sticker = liseré blanc découpé · photo = cadre polaroid · stamp = timbre dentelé · plain = image brute. */
+export type DeskItemStyle = 'sticker' | 'photo' | 'stamp' | 'plain';
 
 export interface DeskItem {
   id: string;
@@ -274,6 +307,10 @@ export interface DeskItem {
   width: number;
   rotate: number;
   style: DeskItemStyle;
+  /** Papiers : couleur choisie (sinon couleur par défaut du modèle). */
+  color?: string;
+  /** Papiers : texte manuscrit écrit dessus. */
+  text?: string;
 }
 
 /* ------------------------------------------------------------------ */

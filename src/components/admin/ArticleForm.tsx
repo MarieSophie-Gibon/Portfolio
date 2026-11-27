@@ -67,16 +67,16 @@ export function ArticleForm({ initial, submitLabel, onSubmit, onCancel }: Props)
           <button
             type="button"
             onClick={() => setPickImage(true)}
-            className="mt-1 flex w-full items-center gap-3 rounded-lg border border-dashed border-white/20 bg-black/30 p-2 text-left hover:border-magenta"
+            className="mt-1 flex w-full items-center gap-3 rounded-lg border border-dashed border-[#8E6A3E]/40 bg-[#FBF5E6] p-2 text-left hover:border-[#B8893A]"
           >
             {v.coverImage ? (
               <img src={v.coverImage} alt="" className="h-12 w-20 rounded object-cover" />
             ) : (
-              <span className="flex h-12 w-20 items-center justify-center rounded bg-white/5">
-                <ImagePlus className="w-5 h-5 text-zinc-500" />
+              <span className="flex h-12 w-20 items-center justify-center rounded bg-[#5A3520]/5">
+                <ImagePlus className="w-5 h-5 text-[#8A6A48]" />
               </span>
             )}
-            <span className="text-sm text-zinc-300">{v.coverImage ? 'Changer l’image' : 'Ajouter une image'}</span>
+            <span className="text-sm text-[#4A2E18]">{v.coverImage ? 'Changer l’image' : 'Ajouter une image'}</span>
           </button>
         </Field>
       </Section>
@@ -113,11 +113,11 @@ export function ArticleForm({ initial, submitLabel, onSubmit, onCancel }: Props)
         </Field>
       </Section>
 
-      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-white/10 bg-[#14161F] px-4 py-3">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-white/10 text-sm hover:bg-white/20">
+      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-[#8E6A3E]/25 bg-[#14161F] px-4 py-3">
+        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
           Annuler
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-magenta text-sm font-semibold hover:brightness-110">
+        <button type="submit" className="px-4 py-2 rounded-lg bg-[#8E2F2A] text-sm font-semibold hover:brightness-110">
           {submitLabel}
         </button>
       </div>

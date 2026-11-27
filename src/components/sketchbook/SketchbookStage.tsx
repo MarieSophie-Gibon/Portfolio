@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProper
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PENCIL_COLORS } from '@/data/defaultData';
 import { useSketchStrokes } from '@/lib/useSketchStrokes';
+import { hasMoreContent } from '@/lib/moreInfo';
 import { useAdmin } from '@/context/AdminContext';
 import { EditScope } from '@/components/admin/EditableText';
 import { ADMIN_BAR_H } from '@/components/admin/AdminTopBar';
@@ -15,7 +16,7 @@ import { DieCutTabs } from './DieCutTabs';
 import { TopNav } from './TopNav';
 import { DrawButton } from './DrawButton';
 import { LogoSticker } from './LogoSticker';
-import { BookCover } from './BookCover';
+import { BookCover, OpenCoverBoards } from './BookCover';
 import { MorePanel, type MoreTarget } from './MorePanel';
 import { AddStickerButton, DeskItemsLayer, StickerLayer, newStickerId } from './DeskItemsLayer';
 
@@ -52,8 +53,26 @@ function useViewport() {
   return vp;
 }
 
-/** Échelle du carnet + amplitude de l'éventail selon la taille d'écran. */
-function computeLayout(w: number, h: number) {
+/* Mode « une page à la fois » (téléphone en portrait). */
+const PAGE_W = BOOK_W / 2;
+const SINGLE_MAX_W = 700;
+const SINGLE_TOP = 14; // pas d'onglets au-dessus du carnet dans ce mode
+const SINGLE_MAX_STRETCH = 1.45; // la page peut s'allonger jusqu'à +45 % en hauteur
+
+type PageSide = 'left' | 'right';
+
+/** Téléphone (ou fenêtre étroite) tenu en portrait : on lit une page à la fois. */
+const isSinglePage = (w: number, h: number) => w < SINGLE_MAX_W && h > w;
+
+/** Échelle du carnet, hauteur de conception des pages et amplitude de l'éventail. */
+function computeLayout(w: number, h: number, single: boolean) {
+  if (single) {
+    const availH = h - HEADER_H - DOCK_H - SINGLE_TOP - 6;
+    const scale = Math.max(0.2, Math.min((w - 24) / PAGE_W, availH / BOOK_H));
+    // Place verticale en trop : on allonge la page plutôt que de laisser du vide.
+    const bookH = clamp(availH / scale, BOOK_H, BOOK_H * SINGLE_MAX_STRETCH);
+    return { scale, fanFactor: 0, bookH };
+  }
   const availH = h - HEADER_H - DOCK_H - TABS_H - 6;
   const mobile = w < 640;
   const scale = Math.max(
@@ -62,7 +81,7 @@ function computeLayout(w: number, h: number) {
   );
   const sideSpace = (w / scale - BOOK_W) / 2 - 24;
   const fanFactor = mobile ? 0.08 : clamp(sideSpace / FAN.offset[FAN_DEPTH], 0.2, 1.06);
-  return { scale, fanFactor };
+  return { scale, fanFactor, bookH: BOOK_H };
 }
 
 /* ------------------------------------------------------------------ */
@@ -73,9 +92,13 @@ function computeLayout(w: number, h: number) {
 interface SpreadViewProps {
   spread: Spread;
   index: number;
+  /** Une couverture existe : depuis la 1re double-page, « précédent » y retourne. */
+  hasCover: boolean;
   count: number;
   /** Double-page active (interactive). false pour l'éventail et les copies du flip. */
   isActive: boolean;
+  /** Mode une page à la fois : pas de clic sur la page pour tourner (swipe + flèches). */
+  single: boolean;
   editing: boolean;
   pencilOn: boolean;
   pencilColor: string;
@@ -92,8 +115,10 @@ interface SpreadViewProps {
 const SpreadView = memo(function SpreadView({
   spread,
   index,
+  hasCover,
   count,
   isActive,
+  single,
   editing,
   pencilOn,
   pencilColor,
@@ -123,13 +148,13 @@ const SpreadView = memo(function SpreadView({
           alias={alias}
           parts={renderSpreadParts(spread, ctx)}
           // En mode édition, un clic sur la page sert à éditer, pas à tourner.
-          interactive={isActive && !pencilOn && !editing}
-          ribbon={isActive}
-          canPrev={index > 0}
+          interactive={isActive && !pencilOn && !editing && !single}
+          canPrev={index > 0 || hasCover}
           canNext={index < count - 1}
           onPrev={onPrev}
           onNext={onNext}
           onMore={isActive ? () => onMore(spread.id) : undefined}
+          showMore={editing || hasMoreContent(spread, ctx.content)}
         />
         {/* Stickers collés sur la double-page (tournent avec elle) */}
         <StickerLayer items={spread.stickers ?? NO_STICKERS} onEdit={editStickers} className="z-[28]" />
@@ -150,32 +175,6 @@ const SpreadView = memo(function SpreadView({
     </ActiveSpreadContext.Provider>
   );
 });
-
-/* ------------------------------------------------------------------ */
-/* Flèche latérale (page précédente / suivante)                        */
-/* ------------------------------------------------------------------ */
-
-function SideArrow({ dir, offset, disabled, onClick }: { dir: FlipDir; offset: number; disabled: boolean; onClick: () => void }) {
-  const prev = dir === 'prev';
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      onPointerDown={(e) => e.stopPropagation()}
-      disabled={disabled}
-      aria-label={prev ? 'Double-page précédente' : 'Double-page suivante'}
-      title={prev ? 'Précédente (←)' : 'Suivante (→)'}
-      className="group absolute top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-ink/30 transition-all duration-300 hover:bg-white/40 hover:text-ink/80 active:scale-95 disabled:pointer-events-none disabled:opacity-0"
-      style={prev ? { right: `calc(100% + ${offset}px - 18px)` } : { left: `calc(100% + ${offset}px - 18px)` }}
-    >
-      {/* Flèche tracée « à la main » */}
-      <svg viewBox="0 0 32 32" className={`h-5 w-5 transition-transform duration-300 ${prev ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'}`} fill="none">
-        <path d="M5 16.5 C11 15.6 18 16.4 25 15.8" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M18.5 9.5 C21 12 23.5 14 26 15.8 C23.2 17.6 20.8 19.8 18.8 22.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Scène                                                               */
@@ -218,11 +217,9 @@ export function SketchbookStage() {
   // Barre admin en haut + tiroir à droite (sur grand écran) réduisent l'espace du carnet.
   const topInset = isAdmin ? ADMIN_BAR_H : 0;
   const rightInset = isAdmin && drawerOpen && w >= 900 ? DRAWER_W : 0;
-  const { scale, fanFactor } = computeLayout(w - rightInset, h - topInset);
-  // Distance entre le bord du carnet et le centre des flèches latérales.
-  const sideRoom = ((w - rightInset) - BOOK_W * scale) / 2;
-  // Assez de place : flèches à côté du carnet ; sinon (mobile) posées sur ses bords.
-  const arrowOffset = sideRoom > 60 ? clamp(sideRoom * 0.35, 22, 64) : -26;
+  const single = isSinglePage(w - rightInset, h - topInset);
+  const { scale, fanFactor, bookH } = computeLayout(w - rightInset, h - topInset, single);
+  const viewW = single ? PAGE_W : BOOK_W; // largeur visible du carnet (px de conception)
   // Même facteur d'échelle pour les feuilles volantes (.ui-scaled) : tailles de texte identiques partout.
   useEffect(() => {
     document.documentElement.style.setProperty('--ui-scale', String(clamp(scale, 1, 1.6)));
@@ -234,6 +231,14 @@ export function SketchbookStage() {
   pencilRef.current = pencilOn;
   const editingRef = useRef(false);
   editingRef.current = editing;
+
+  // Mode une page : page visible de la double-page active + sens de la dernière navigation.
+  const [pageSide, setPageSide] = useState<PageSide>('left');
+  const sideRef = useRef<PageSide>('left');
+  sideRef.current = pageSide;
+  const singleRef = useRef(single);
+  singleRef.current = single;
+  const [navDir, setNavDir] = useState<FlipDir>('next');
 
   /* ---------------- Toast ---------------- */
   useEffect(() => {
@@ -251,9 +256,13 @@ export function SketchbookStage() {
       activeRef.current = to;
       setActiveIndex(to);
       setHovered(null);
+      setPageSide('left'); // une double-page s'ouvre sur sa page gauche
+      sideRef.current = 'left';
+      setNavDir(to > from ? 'next' : 'prev');
 
       window.clearTimeout(flipTimer.current);
-      if (prefersReducedMotion()) {
+      // Mode une page : glissement simple à la place du flip 3D de la double-page.
+      if (prefersReducedMotion() || singleRef.current) {
         setFlip(null);
         return;
       }
@@ -265,6 +274,30 @@ export function SketchbookStage() {
 
   useEffect(() => () => window.clearTimeout(flipTimer.current), []);
 
+  /** Page suivante / précédente : double-page entière, ou demi-page en mode une page. */
+  const step = useCallback(
+    (delta: 1 | -1) => {
+      const i = activeRef.current;
+      if (!singleRef.current || i === -1) return goTo(i + delta);
+      const side = sideRef.current;
+      if (delta > 0 && side === 'left') {
+        setPageSide('right');
+        sideRef.current = 'right';
+      } else if (delta < 0 && side === 'right') {
+        setPageSide('left');
+        sideRef.current = 'left';
+      } else if (delta > 0) {
+        goTo(i + 1);
+      } else if (i - 1 >= minIndex) {
+        goTo(i - 1);
+        // En reculant, on arrive sur la page droite de la double-page précédente.
+        setPageSide('right');
+        sideRef.current = 'right';
+      }
+    },
+    [goTo, minIndex],
+  );
+
   // Le tiroir admin demande d'afficher une page précise.
   useEffect(() => {
     if (!focusRequest) return;
@@ -274,8 +307,8 @@ export function SketchbookStage() {
 
   // Un clic qui termine un swipe ne doit pas aussi tourner la page.
   const suppressClick = useRef(false);
-  const clickPrev = useCallback(() => void (!suppressClick.current && goTo(activeRef.current - 1)), [goTo]);
-  const clickNext = useCallback(() => void (!suppressClick.current && goTo(activeRef.current + 1)), [goTo]);
+  const clickPrev = useCallback(() => void (!suppressClick.current && step(-1)), [step]);
+  const clickNext = useCallback(() => void (!suppressClick.current && step(1)), [step]);
 
   // Clavier ← / →
   useEffect(() => {
@@ -285,15 +318,15 @@ export function SketchbookStage() {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        goTo(activeRef.current + 1);
+        step(1);
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        goTo(activeRef.current - 1);
+        step(-1);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [goTo]);
+  }, [step]);
 
   // Trackpad 2 doigts horizontal : cumul de deltaX + verrou jusqu'à la fin de l'inertie.
   useEffect(() => {
@@ -315,7 +348,7 @@ export function SketchbookStage() {
       if (gap > 200) acc = 0;
       acc += e.deltaX;
       if (Math.abs(acc) > 30) {
-        goTo(activeRef.current + Math.sign(acc));
+        step(acc > 0 ? 1 : -1);
         acc = 0;
         locked = true;
         lockedAt = now;
@@ -323,7 +356,7 @@ export function SketchbookStage() {
     };
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
-  }, [goTo]);
+  }, [step]);
 
   // Swipe tactile / glisser à la souris
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
@@ -350,7 +383,7 @@ export function SketchbookStage() {
     if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
       suppressClick.current = true;
       window.setTimeout(() => (suppressClick.current = false), 120);
-      goTo(activeRef.current + (dx < 0 ? 1 : -1));
+      step(dx < 0 ? 1 : -1);
     }
   };
 
@@ -413,8 +446,10 @@ export function SketchbookStage() {
       <SpreadView
         spread={spread}
         index={index}
+        hasCover={hasCover}
         count={count}
         isActive={!isClone && index === safeIndex}
+        single={single}
         editing={editing}
         pencilOn={pencilOn}
         pencilColor={pencilColor}
@@ -488,19 +523,46 @@ export function SketchbookStage() {
 
       {/* Carnet */}
       <main className="pointer-events-none absolute inset-x-0 z-10 flex items-center justify-center" style={{ top: HEADER_H, bottom: DOCK_H }}>
-        <div className="pointer-events-auto relative" style={{ width: BOOK_W * scale, height: BOOK_H * scale, marginTop: TABS_H }}>
+        <div
+          // Mode une page : remonté à chaque double-page pour jouer l'entrée (pas de flip 3D).
+          key={single ? `page-${safeIndex}` : 'book'}
+          className={`pointer-events-auto relative ${single && !prefersReducedMotion() ? (navDir === 'next' ? 'animate-page-in-next' : 'animate-page-in-prev') : ''}`}
+          style={{ width: viewW * scale, height: bookH * scale, marginTop: single ? SINGLE_TOP : TABS_H }}
+        >
+          {/* Mode une page : fenêtre de la largeur d'une page sur la double-page complète. */}
           <div
-            className="absolute left-0 top-0 origin-top-left transition-transform duration-[620ms] ease-[cubic-bezier(0.45,0.05,0.25,1)]"
-            // Fermé : on décale d'un quart pour centrer la couverture (moitié droite) sur le bureau.
-            style={{ width: BOOK_W, height: BOOK_H, transform: `scale(${scale}) translateX(${closed ? -BOOK_W / 4 : 0}px)` }}
+            className={single ? 'absolute inset-0 overflow-hidden rounded-[10px]' : 'contents'}
+            style={single ? { boxShadow: '0 22px 44px -14px rgba(20,60,80,0.5), 0 6px 12px -6px rgba(20,60,80,0.25)' } : undefined}
           >
-            {/* Ombre portée sur le bureau */}
-            <div
-              className="pointer-events-none absolute -bottom-8 left-[-16%] right-[-16%] h-16 rounded-full blur-2xl"
-              style={{ background: 'rgba(20,60,80,0.35)' }}
-            />
-
-            <DieCutTabs spreads={spreads} activeIndex={safeIndex} onSelect={goTo} />
+          <div
+            className={`absolute left-0 top-0 origin-top-left transition-transform duration-[620ms] ease-[cubic-bezier(0.45,0.05,0.25,1)] ${single ? 'single-page' : ''}`}
+            style={{
+              width: BOOK_W,
+              height: bookH,
+              transform: `scale(${scale}) translateX(${
+                single
+                  ? closed || pageSide === 'right'
+                    ? -PAGE_W // couverture et page droite = moitié droite
+                    : 0
+                  : closed
+                    ? -BOOK_W / 4 // fermé : centre la couverture (moitié droite) sur le bureau
+                    : 0
+              }px)`,
+            }}
+          >
+            {!single && (
+              <>
+                {/* Ombre portée sur le bureau */}
+                <div
+                  className="pointer-events-none absolute -bottom-8 left-[-16%] right-[-16%] h-16 rounded-full blur-2xl"
+                  style={{ background: 'rgba(20,60,80,0.35)' }}
+                />
+                {/* Onglets : remplacés par le sommaire en mode une page (trop étroit). */}
+                <DieCutTabs spreads={spreads} activeIndex={safeIndex} onSelect={goTo} />
+                {/* Livre ouvert : plats en cuir (couleur de la couverture) de part et d'autre des pages */}
+                {!closed && <OpenCoverBoards color={settings.cover.color} />}
+              </>
+            )}
 
             {closed ? (
               // Carnet fermé : seule la couverture est affichée.
@@ -512,6 +574,7 @@ export function SketchbookStage() {
               const offset = index - safeIndex;
               const depth = Math.abs(offset);
               if (depth > FAN_DEPTH + 1) return null;
+              if (single && depth > 0) return null; // pas d'éventail en mode une page
               const isActive = depth === 0;
               const isSide = depth >= 1 && depth <= FAN_DEPTH;
               return (
@@ -560,10 +623,7 @@ export function SketchbookStage() {
 
             {flip && <PageTurnOverlay3D flip={flip} renderSpread={(i) => renderSpread(i, true)} />}
           </div>
-
-          {/* Flèches de part et d'autre du carnet (hors de l'échelle : taille constante) */}
-          <SideArrow dir="prev" offset={arrowOffset} disabled={safeIndex === minIndex} onClick={() => goTo(activeRef.current - 1)} />
-          <SideArrow dir="next" offset={arrowOffset} disabled={safeIndex === count - 1} onClick={() => goTo(activeRef.current + 1)} />
+          </div>
         </div>
       </main>
 

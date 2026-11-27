@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Copy, Eye, Pencil, Plus, Trash, X } from 'lucide-react';
-import { useAdmin } from '@/context/AdminContext';
+import { useAdmin, type DrawerTab } from '@/context/AdminContext';
 import {
   articleFormFrom,
   contrastText,
@@ -11,44 +11,58 @@ import {
   moveSpread,
   updateArticle,
 } from '@/lib/contentOps';
+import { leatherStyle } from '@/components/sketchbook/BookCover';
 import type { Spread, SpreadKind } from '@/types/portfolio';
 import { ADMIN_BAR_H } from './AdminTopBar';
 import { ArticleForm } from './ArticleForm';
+import { GeneralPanel } from './GeneralPanel';
 import { SettingsPanel } from './SettingsPanel';
-import { DeskPanel } from './DeskPanel';
 import { SpreadMetaForm } from './SpreadMetaForm';
+import { btnPrimary, btnSecondary } from './formFields';
 
 const KIND_LABEL: Record<SpreadKind, string> = {
-  cover: 'Couverture',
-  moodboard: 'Moodboard',
+  cover: 'Intro',
+  moodboard: 'Lab',
   profile: 'Profil',
   project: 'Article',
   contact: 'Contact',
 };
 
-type View = { tab: 'pages' } | { tab: 'desk' } | { tab: 'settings' } | { tab: 'new' } | { tab: 'edit'; spreadId: string };
+const TABS: { tab: DrawerTab; label: string }[] = [
+  { tab: 'general', label: 'Général' },
+  { tab: 'pages', label: 'Pages' },
+  { tab: 'settings', label: 'Réglages' },
+];
 
-const iconBtn = 'w-7 h-7 rounded-md flex items-center justify-center text-zinc-300 hover:bg-white/10 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent';
+/** Sous-vue de l'onglet Pages. */
+type PagesView = { mode: 'list' } | { mode: 'new' } | { mode: 'edit'; spreadId: string };
 
-/** Tiroir latéral : pages du carnet (CRUD articles, ordre) + réglages globaux. */
+const iconBtn =
+  'flex h-7 w-7 items-center justify-center rounded-md text-[#6B4A2B] hover:bg-[#5A3520]/12 hover:text-[#3A2414] disabled:opacity-25 disabled:hover:bg-transparent';
+
+/** Tiroir d'édition : Général (fond + décor), Pages (ordre, articles), Réglages. */
 export function ArticleManagerDrawer() {
-  const { isAdmin, drawerOpen, setDrawerOpen, content, edit, focusSpread } = useAdmin();
-  const [view, setView] = useState<View>({ tab: 'pages' });
+  const { isAdmin, drawerOpen, setDrawerOpen, drawerTab, setDrawerTab, content, edit, focusSpread } = useAdmin();
+  const [view, setView] = useState<PagesView>({ mode: 'list' });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Revenir à la liste quand on change d'onglet.
+  useEffect(() => setView({ mode: 'list' }), [drawerTab]);
 
   if (!isAdmin || !drawerOpen) return null;
 
   const { spreads, articles } = content;
-  const editing = view.tab === 'edit' ? spreads.find((s) => s.id === view.spreadId) : undefined;
+  const editing = view.mode === 'edit' ? spreads.find((s) => s.id === view.spreadId) : undefined;
   const editingArticle = editing?.kind === 'project' ? articles.find((a) => a.id === editing.articleId) : undefined;
 
   const row = (s: Spread, i: number) => (
-    <li key={s.id} className="group flex items-center gap-2 rounded-xl bg-white/[0.04] px-2.5 py-2 hover:bg-white/[0.07]">
-      <span className="w-3 h-3 shrink-0 rounded-full ring-2 ring-white/80" style={{ backgroundColor: s.tabColor }} />
+    <li key={s.id} className="group flex items-center gap-2 rounded-md border border-[#8E6A3E]/20 bg-[#FBF5E6]/80 px-2.5 py-2 hover:border-[#B8893A]/60">
+      <span className="h-3 w-3 shrink-0 rounded-full ring-2 ring-[#FBF5E6] shadow-[0_0_0_3px_rgba(142,106,62,0.3)]" style={{ backgroundColor: s.tabColor }} />
       <button type="button" onClick={() => focusSpread(s.id)} className="min-w-0 flex-1 text-left" title="Afficher cette page">
-        <span className="block truncate text-sm font-semibold">{s.label}</span>
-        <span className="font-mono text-[10px] text-zinc-500">
-          {KIND_LABEL[s.kind]} · jour {s.day} · onglet {s.tabLabel}
+        <span className="block truncate text-sm font-semibold text-[#3A2414]">{s.label || s.tabLabel || KIND_LABEL[s.kind]}</span>
+        <span className="font-mono text-[10px] text-[#8A6A48]">
+          {KIND_LABEL[s.kind]}
+          {s.tabLabel ? ` · onglet ${s.tabLabel}` : ''}
         </span>
       </button>
 
@@ -60,18 +74,18 @@ export function ArticleManagerDrawer() {
               edit((c) => deleteSpread(c, s.id));
               setConfirmDelete(null);
             }}
-            className="px-2 py-1 rounded-md bg-magenta text-xs font-semibold"
+            className="rounded-md bg-[#8E2F2A] px-2 py-1 text-xs font-semibold text-[#F7E7C6]"
           >
             Supprimer
           </button>
-          <button type="button" onClick={() => setConfirmDelete(null)} className="px-2 py-1 rounded-md bg-white/10 text-xs">
+          <button type="button" onClick={() => setConfirmDelete(null)} className="rounded-md bg-[#5A3520]/10 px-2 py-1 text-xs text-[#3A2414]">
             Non
           </button>
         </span>
       ) : (
         <span className="flex items-center">
           <button type="button" className={iconBtn} title="Monter" aria-label="Monter" disabled={i === 0} onClick={() => edit((c) => moveSpread(c, s.id, -1))}>
-            <ArrowUp className="w-4 h-4" />
+            <ArrowUp className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -81,24 +95,24 @@ export function ArticleManagerDrawer() {
             disabled={i === spreads.length - 1}
             onClick={() => edit((c) => moveSpread(c, s.id, 1))}
           >
-            <ArrowDown className="w-4 h-4" />
+            <ArrowDown className="h-4 w-4" />
           </button>
-          <button type="button" className={iconBtn} title="Modifier" aria-label="Modifier" onClick={() => setView({ tab: 'edit', spreadId: s.id })}>
-            <Pencil className="w-4 h-4" />
+          <button type="button" className={iconBtn} title="Modifier" aria-label="Modifier" onClick={() => setView({ mode: 'edit', spreadId: s.id })}>
+            <Pencil className="h-4 w-4" />
           </button>
           {s.kind === 'project' && (
             <>
+              <button type="button" className={iconBtn} title="Dupliquer" aria-label="Dupliquer" onClick={() => edit((c) => void duplicateSpread(c, s.id))}>
+                <Copy className="h-4 w-4" />
+              </button>
               <button
                 type="button"
-                className={iconBtn}
-                title="Dupliquer"
-                aria-label="Dupliquer"
-                onClick={() => edit((c) => void duplicateSpread(c, s.id))}
+                className={`${iconBtn} hover:!bg-[#8E2F2A] hover:!text-[#F7E7C6]`}
+                title="Supprimer"
+                aria-label="Supprimer"
+                onClick={() => setConfirmDelete(s.id)}
               >
-                <Copy className="w-4 h-4" />
-              </button>
-              <button type="button" className={`${iconBtn} hover:!bg-magenta`} title="Supprimer" aria-label="Supprimer" onClick={() => setConfirmDelete(s.id)}>
-                <Trash className="w-4 h-4" />
+                <Trash className="h-4 w-4" />
               </button>
             </>
           )}
@@ -109,101 +123,124 @@ export function ArticleManagerDrawer() {
 
   return (
     <aside
-      className="fixed right-0 bottom-0 z-[55] flex w-[420px] max-w-full flex-col border-l border-white/10 bg-[#14161F]/92 text-zinc-100 shadow-[-20px_0_60px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+      className="fixed bottom-0 right-0 z-[55] flex w-[420px] max-w-full flex-col text-[#3A2414]"
       style={{ top: ADMIN_BAR_H }}
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      aria-label="Gestion du carnet"
+      aria-label="Menu d'édition"
     >
-      <header className="flex items-center gap-1 border-b border-white/10 px-3 py-2">
-        {(['pages', 'desk', 'settings'] as const).map((t) => (
+      {/* Dos en cuir */}
+      <div className="absolute inset-y-0 left-0 w-3" style={{ ...leatherStyle('#5A3520'), boxShadow: 'inset -2px 0 3px rgba(0,0,0,0.35)' }} />
+
+      <div
+        className="ml-3 flex min-h-0 flex-1 flex-col shadow-[-20px_0_50px_rgba(10,5,0,0.45)]"
+        style={{
+          backgroundColor: '#F3E9D2',
+          backgroundImage: 'var(--tex-paper), radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(140,95,40,0.18) 100%)',
+          backgroundSize: '320px 320px, 100% 100%',
+        }}
+      >
+        <header className="flex items-end gap-1 border-b border-[#8E6A3E]/30 px-3 pt-2">
+          {TABS.map(({ tab, label }) => {
+            const active = drawerTab === tab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setDrawerTab(tab)}
+                className={`t-fantasy -mb-px rounded-t-md border px-3 py-1.5 text-[12px] uppercase tracking-[0.12em] transition ${
+                  active
+                    ? 'border-[#8E6A3E]/30 border-b-[#F3E9D2] bg-[#F3E9D2] text-[#3A2414]'
+                    : 'border-transparent text-[#8A6A48] hover:text-[#3A2414]'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
           <button
-            key={t}
             type="button"
-            onClick={() => setView({ tab: t })}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-              view.tab === t || (t === 'pages' && (view.tab === 'new' || view.tab === 'edit')) ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Fermer"
+            className="mb-1.5 ml-auto flex h-8 w-8 items-center justify-center rounded-full text-[#6B4A2B] hover:bg-[#5A3520]/10"
           >
-            {t === 'pages' ? 'Pages & articles' : t === 'desk' ? 'Décor' : 'Réglages'}
+            <X className="h-4 w-4" />
           </button>
-        ))}
-        <button type="button" onClick={() => setDrawerOpen(false)} aria-label="Fermer" className="ml-auto w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center">
-          <X className="w-4 h-4" />
-        </button>
-      </header>
+        </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {view.tab === 'pages' && (
-          <>
-            <button
-              type="button"
-              onClick={() => setView({ tab: 'new' })}
-              className="mb-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-magenta py-2.5 font-semibold hover:brightness-110"
-            >
-              <Plus className="w-4 h-4" /> Nouvel article
-            </button>
-            <p className="mb-2 font-mono text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Ordre du carnet</p>
-            <ul className="space-y-1.5">{spreads.map(row)}</ul>
-            <p className="mt-4 flex items-start gap-1.5 text-[11px] leading-relaxed text-zinc-500">
-              <Eye className="mt-0.5 w-3.5 h-3.5 shrink-0" /> Clique sur un titre pour afficher la page. Les textes et images se modifient directement en cliquant
-              dessus dans le carnet.
-            </p>
-          </>
-        )}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {drawerTab === 'general' && <GeneralPanel />}
+          {drawerTab === 'settings' && <SettingsPanel />}
 
-        {view.tab === 'desk' && <DeskPanel />}
-        {view.tab === 'settings' && <SettingsPanel />}
+          {drawerTab === 'pages' && view.mode === 'list' && (
+            <>
+              <button type="button" onClick={() => setView({ mode: 'new' })} className={`${btnPrimary} mb-4 w-full py-2.5`}>
+                <Plus className="h-4 w-4" /> Nouvel article
+              </button>
+              <p className="t-fantasy mb-2 text-[11px] uppercase tracking-[0.18em] text-[#6B4A2B]">
+                <span className="text-[#B8893A]">✦</span> Ordre du carnet
+              </p>
+              <ul className="space-y-1.5">{spreads.map(row)}</ul>
+              <p className="mt-4 flex items-start gap-1.5 text-[11px] leading-relaxed text-[#8A6A48]">
+                <Eye className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Clique sur un titre pour afficher la page. Les textes et images se modifient directement en
+                cliquant dessus dans le carnet.
+              </p>
+            </>
+          )}
 
-        {view.tab === 'new' && (
-          <>
-            <h2 className="mb-3 font-syne text-lg font-extrabold">Nouvel article</h2>
-            <ArticleForm
-              initial={emptyArticleForm()}
-              submitLabel="Créer la double-page"
-              onCancel={() => setView({ tab: 'pages' })}
-              onSubmit={(values) => {
-                let newId = '';
-                edit((c) => {
-                  newId = createArticle(c, values);
-                });
-                setView({ tab: 'pages' });
-                if (newId) window.setTimeout(() => focusSpread(newId), 0);
-              }}
-            />
-          </>
-        )}
-
-        {view.tab === 'edit' && editing && (
-          <>
-            <h2 className="mb-3 font-syne text-lg font-extrabold">Modifier · {editing.label}</h2>
-            {editing.kind === 'project' && editingArticle ? (
+          {drawerTab === 'pages' && view.mode === 'new' && (
+            <>
+              <h2 className="t-fantasy mb-3 text-lg">Nouvel article</h2>
               <ArticleForm
-                key={editing.id}
-                initial={articleFormFrom(editingArticle, editing)}
-                submitLabel="Enregistrer"
-                onCancel={() => setView({ tab: 'pages' })}
+                initial={emptyArticleForm()}
+                submitLabel="Créer la double-page"
+                onCancel={() => setView({ mode: 'list' })}
                 onSubmit={(values) => {
-                  edit((c) => updateArticle(c, editing.id, values));
-                  setView({ tab: 'pages' });
-                }}
-              />
-            ) : (
-              <SpreadMetaForm
-                key={editing.id}
-                spread={editing}
-                onCancel={() => setView({ tab: 'pages' })}
-                onSubmit={(meta) => {
+                  let newId = '';
                   edit((c) => {
-                    const s = c.spreads.find((x) => x.id === editing.id);
-                    if (s) Object.assign(s, meta, { tabText: contrastText(meta.tabColor) });
+                    newId = createArticle(c, values);
                   });
-                  setView({ tab: 'pages' });
+                  setView({ mode: 'list' });
+                  if (newId) window.setTimeout(() => focusSpread(newId), 0);
                 }}
               />
-            )}
-          </>
-        )}
+            </>
+          )}
+
+          {drawerTab === 'pages' && view.mode === 'edit' && editing && (
+            <>
+              <button type="button" onClick={() => setView({ mode: 'list' })} className={`${btnSecondary} mb-3`}>
+                ← Retour
+              </button>
+              <h2 className="t-fantasy mb-3 text-lg">Modifier · {editing.label || KIND_LABEL[editing.kind]}</h2>
+              {editing.kind === 'project' && editingArticle ? (
+                <ArticleForm
+                  key={editing.id}
+                  initial={articleFormFrom(editingArticle, editing)}
+                  submitLabel="Enregistrer"
+                  onCancel={() => setView({ mode: 'list' })}
+                  onSubmit={(values) => {
+                    edit((c) => updateArticle(c, editing.id, values));
+                    setView({ mode: 'list' });
+                  }}
+                />
+              ) : (
+                <SpreadMetaForm
+                  key={editing.id}
+                  spread={editing}
+                  onCancel={() => setView({ mode: 'list' })}
+                  onSubmit={(meta) => {
+                    edit((c) => {
+                      const s = c.spreads.find((x) => x.id === editing.id);
+                      if (s) Object.assign(s, meta, { tabText: contrastText(meta.tabColor) });
+                    });
+                    setView({ mode: 'list' });
+                  }}
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
     </aside>
   );

@@ -2,8 +2,6 @@ import { useContext, useState, type CSSProperties } from 'react';
 import { Play, Plus } from 'lucide-react';
 import { EditableImage, ImagePickerDialog } from '@/components/admin/EditableImage';
 import { EditableText, ItemTools, useCanEdit } from '@/components/admin/EditableText';
-import { MetallicPaperclip, WashiTape, type TapeVariant } from '@/components/sketchbook/DestroyDecorations';
-import { ArtworkPresetSVG } from '@/components/sketchbook/Illustrations';
 import type { ImageAsset, ProjectArticle } from '@/types/portfolio';
 import { ActiveSpreadContext } from './spreadContext';
 
@@ -58,7 +56,6 @@ const LAYOUTS: Slot[][] = [
     { l: 49, t: 53, w: 50, r: -4 },
   ],
 ];
-const TAPES: TapeVariant[] = ['pink', 'cyan', 'checker', 'hazard'];
 
 interface CollageProps {
   article: ProjectArticle;
@@ -79,7 +76,10 @@ export function ScrapbookCollage({ article, edit, onOpen }: CollageProps) {
   const entries: Entry[] = [
     { asset: article.coverImage.src ? article.coverImage : null, galleryIndex: null },
     ...article.gallery.map((g, i) => ({ asset: g, galleryIndex: i })),
-  ].slice(0, 4);
+  ]
+    // Visiteur : seulement les vrais médias (pas de cadre vide).
+    .filter((e) => canEdit || e.asset)
+    .slice(0, 4);
   const slots = LAYOUTS[entries.length];
 
   return (
@@ -100,23 +100,14 @@ export function ScrapbookCollage({ article, edit, onOpen }: CollageProps) {
               ev.stopPropagation();
               if (!canEdit) onOpen();
             }}
-            className="absolute cursor-pointer bg-white p-[3%] pb-[2%] shadow-[0_12px_22px_-12px_rgba(20,60,80,0.55),0_2px_4px_rgba(20,60,80,0.12)] transition-transform hover:-translate-y-1"
+            className="absolute cursor-pointer bg-white p-[3%] pb-[2%] shadow-[0_12px_22px_-12px_rgba(60,40,15,0.55),0_2px_4px_rgba(60,40,15,0.12)] transition-transform hover:-translate-y-1"
           >
-            {i === 0 ? (
-              <MetallicPaperclip className="absolute -top-4 right-3 z-20 h-9 w-4" rotate={12} />
-            ) : (
-              <WashiTape variant={TAPES[i % TAPES.length]} className="absolute -top-2 left-1/2 z-20 h-3.5 w-16 -translate-x-1/2" rotate={i % 2 ? 4 : -3} />
-            )}
             <EditableImage value={e.asset ?? { ...article.coverImage, type: 'image' }} onSave={save} allowRemove={e.galleryIndex === null} allowVideo>
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4EDDD]">
                 {e.asset ? (
                   <MediaView asset={e.asset} className="h-full w-full object-cover" />
-                ) : article.artwork ? (
-                  <div className="flex h-full w-full items-center">
-                    <ArtworkPresetSVG preset={article.artwork} />
-                  </div>
                 ) : (
-                  <div className="halftone-dots h-full w-full" style={{ backgroundColor: article.accent }} />
+                  <div className="t-caption flex h-full w-full items-center justify-center border border-dashed border-ink/30 font-mono text-ink/40">IMAGE</div>
                 )}
                 {e.asset?.type === 'video' && (
                   <span className="t-caption absolute bottom-1 left-1 inline-flex items-center gap-0.5 rounded-full bg-ink/70 px-1.5 py-0.5 font-mono font-bold text-white">
@@ -151,7 +142,7 @@ export function ScrapbookCollage({ article, edit, onOpen }: CollageProps) {
             ev.stopPropagation();
             setAdding(true);
           }}
-          className="t-caption absolute bottom-1 right-1 z-30 inline-flex items-center gap-1 rounded-full border border-dashed border-magenta bg-white/90 px-2 py-0.5 font-mono font-bold text-magenta hover:bg-magenta hover:text-white"
+          className="t-caption absolute bottom-1 right-1 z-30 inline-flex items-center gap-1 rounded-full border border-dashed border-[#B8893A] bg-white/90 px-2 py-0.5 font-mono font-bold text-[#8E2F2A] hover:bg-[#8E2F2A] hover:text-white"
         >
           <Plus className="h-3 w-3" /> photo / vidéo
         </button>

@@ -19,10 +19,10 @@ const swallow = (e: SyntheticEvent) => e.stopPropagation();
 
 /** Contour pointillé néon des zones éditables. */
 export const editableOutline =
-  'pointer-events-auto outline-dashed outline-1 outline-offset-2 outline-magenta/50 hover:outline-2 hover:outline-magenta cursor-text rounded-[2px]';
+  'pointer-events-auto outline-dashed outline-1 outline-offset-2 outline-[#B8893A]/60 hover:outline-2 hover:outline-magenta cursor-text rounded-[2px]';
 
 const editorClass =
-  'pointer-events-auto block w-full bg-white text-ink [-webkit-text-fill-color:#13141A] rounded-[3px] outline-2 outline-magenta px-1 -mx-1 resize-none font-[inherit] [font-size:inherit] [line-height:inherit] [letter-spacing:inherit] [text-transform:none] shadow-[0_4px_16px_rgba(0,0,0,0.35)]';
+  'pointer-events-auto block w-full bg-white text-ink [-webkit-text-fill-color:#13141A] rounded-[3px] outline-2 outline-[#B8893A] px-1 -mx-1 resize-none font-[inherit] [font-size:inherit] [line-height:inherit] [letter-spacing:inherit] [text-transform:none] shadow-[0_4px_16px_rgba(0,0,0,0.35)]';
 
 /* ------------------------------------------------------------------ */
 /* Texte éditable                                                      */
@@ -167,7 +167,7 @@ export function EditableList({ items, onSave, children, className = '' }: Editab
             );
           }}
         />
-        <p className="mt-0.5 font-mono text-[7px] text-magenta">1 élément par ligne · Maj+Entrée = nouvelle ligne</p>
+        <p className="mt-0.5 font-mono text-[7px] text-[#8E2F2A]">1 élément par ligne · Maj+Entrée = nouvelle ligne</p>
       </div>
     );
   }
@@ -194,7 +194,7 @@ export function EditableList({ items, onSave, children, className = '' }: Editab
 /* ------------------------------------------------------------------ */
 
 const toolBtn =
-  'inline-flex items-center justify-center w-4 h-4 rounded-full bg-magenta text-white shadow hover:scale-110 transition-transform';
+  'inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#8E2F2A] text-[#F7E7C6] shadow hover:scale-110 transition-transform';
 
 export function ItemTools({ onRemove, onToggle, toggled }: { onRemove?: () => void; onToggle?: () => void; toggled?: boolean }) {
   const canEdit = useCanEdit();
@@ -209,7 +209,7 @@ export function ItemTools({ onRemove, onToggle, toggled }: { onRemove?: () => vo
             swallow(e);
             onToggle();
           }}
-          className={`${toolBtn} ${toggled ? 'bg-hazard text-ink' : 'bg-zinc-500'}`}
+          className={`${toolBtn} ${toggled ? 'bg-[#B8893A] text-ink' : 'bg-[#8A6A48]'}`}
         >
           <Star className="w-2.5 h-2.5" />
         </button>
@@ -242,7 +242,7 @@ export function AddItemButton({ label, onClick, className = '' }: { label: strin
         swallow(e);
         onClick();
       }}
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-dashed border-magenta text-magenta bg-white/80 font-mono text-[8px] font-bold hover:bg-magenta hover:text-white transition-colors ${className}`}
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-dashed border-[#B8893A] text-[#8E2F2A] bg-[#FBF5E6]/90 font-mono text-[8px] font-bold hover:bg-[#8E2F2A] hover:text-[#F7E7C6] transition-colors ${className}`}
     >
       <Plus className="w-2.5 h-2.5" /> {label}
     </button>
