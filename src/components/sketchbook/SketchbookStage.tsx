@@ -1,20 +1,16 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { PENCIL_COLORS } from '@/data/defaultData';
-import { useSketchStrokes } from '@/lib/useSketchStrokes';
 import { hasMoreContent } from '@/lib/moreInfo';
 import { useAdmin } from '@/context/AdminContext';
 import { EditScope } from '@/components/admin/EditableText';
 import { ADMIN_BAR_H } from '@/components/admin/AdminTopBar';
 import { renderSpreadParts } from '@/components/spreads/renderSpreadParts';
 import { ActiveSpreadContext, type SpreadCtx } from '@/components/spreads/spreadContext';
-import type { DeskItem, SketchStroke, Spread } from '@/types/portfolio';
+import type { DeskItem, Spread } from '@/types/portfolio';
 import { BOOK_H, BOOK_W, SpreadBase } from './SpreadBase';
-import { SpreadSketchCanvas } from './SpreadSketchCanvas';
 import { FLIP_MS, PageTurnOverlay3D, type FlipDir, type FlipState } from './PageTurnOverlay3D';
 import { DieCutTabs } from './DieCutTabs';
 import { TopNav } from './TopNav';
-import { DrawButton } from './DrawButton';
 import { LogoSticker } from './LogoSticker';
 import { BookCover, OpenCoverBoards } from './BookCover';
 import { MorePanel, type MoreTarget } from './MorePanel';
@@ -38,7 +34,6 @@ const FAN = {
 const FAN_DEPTH = 4;
 const HOVER_NUDGE = 22;
 
-const EMPTY_STROKES: SketchStroke[] = [];
 const NO_STICKERS: DeskItem[] = [];
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -100,15 +95,10 @@ interface SpreadViewProps {
   /** Mode une page à la fois : pas de clic sur la page pour tourner (swipe + flèches). */
   single: boolean;
   editing: boolean;
-  pencilOn: boolean;
-  pencilColor: string;
-  eraser: boolean;
-  strokes: SketchStroke[];
   alias: string;
   ctx: SpreadCtx;
   onPrev: () => void;
   onNext: () => void;
-  addStroke: (spreadId: string, stroke: SketchStroke) => void;
   onMore: (spreadId: string) => void;
 }
 
@@ -120,15 +110,10 @@ const SpreadView = memo(function SpreadView({
   isActive,
   single,
   editing,
-  pencilOn,
-  pencilColor,
-  eraser,
-  strokes,
   alias,
   ctx,
   onPrev,
   onNext,
-  addStroke,
   onMore,
 }: SpreadViewProps) {
   const editStickers = (fn: (items: DeskItem[]) => void) =>
@@ -141,14 +126,14 @@ const SpreadView = memo(function SpreadView({
 
   return (
     <ActiveSpreadContext.Provider value={isActive}>
-    <EditScope.Provider value={isActive && !pencilOn}>
+    <EditScope.Provider value={isActive}>
       <div className="relative w-full h-full">
         <SpreadBase
           spread={spread}
           alias={alias}
           parts={renderSpreadParts(spread, ctx)}
           // En mode édition, un clic sur la page sert à éditer, pas à tourner.
-          interactive={isActive && !pencilOn && !editing && !single}
+          interactive={isActive && !editing && !single}
           canPrev={index > 0 || hasCover}
           canNext={index < count - 1}
           onPrev={onPrev}
@@ -160,15 +145,6 @@ const SpreadView = memo(function SpreadView({
         <StickerLayer items={spread.stickers ?? NO_STICKERS} onEdit={editStickers} className="z-[28]" />
         {isActive && (
           <AddStickerButton onAdd={(item) => editStickers((list) => void list.push({ ...item, id: newStickerId() }))} />
-        )}
-        {(isActive || strokes.length > 0) && (
-          <SpreadSketchCanvas
-            strokes={strokes}
-            enabled={isActive && pencilOn}
-            color={pencilColor}
-            eraser={eraser}
-            onAddStroke={(s) => addStroke(spread.id, s)}
-          />
         )}
       </div>
     </EditScope.Provider>
@@ -208,11 +184,6 @@ export function SketchbookStage() {
   const [toast, setToast] = useState<string | null>(null);
   const [swipeHint, setSwipeHint] = useState<FlipDir | null>(null);
 
-  const [pencilOn, setPencilOn] = useState(false);
-  const [pencilColor, setPencilColor] = useState<string>(PENCIL_COLORS[0].hex);
-  const [eraser, setEraser] = useState(false);
-  const { strokes, addStroke, clearStrokes } = useSketchStrokes();
-
   const { w, h } = useViewport();
   // Barre admin en haut + tiroir à droite (sur grand écran) réduisent l'espace du carnet.
   const topInset = isAdmin ? ADMIN_BAR_H : 0;
@@ -227,8 +198,6 @@ export function SketchbookStage() {
 
   const modalOpenRef = useRef(false);
   modalOpenRef.current = moreTarget !== null; // pas de navigation sous la feuille volante
-  const pencilRef = useRef(false);
-  pencilRef.current = pencilOn;
   const editingRef = useRef(false);
   editingRef.current = editing;
 
@@ -361,7 +330,7 @@ export function SketchbookStage() {
   // Swipe tactile / glisser à la souris
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const onPointerDown = (e: PointerEvent) => {
-    if (modalOpenRef.current || pencilRef.current) return;
+    if (modalOpenRef.current) return;
     if (e.pointerType === 'mouse' && (e.button !== 0 || editingRef.current)) return; // en édition : pas de glisser souris
 
     pointerStart.current = { x: e.clientX, y: e.clientY };
@@ -405,14 +374,6 @@ export function SketchbookStage() {
     [spreads, goTo],
   );
 
-  const togglePencil = () => {
-    setPencilOn((on) => {
-      setToast(on ? 'Mode navigation' : 'Mode Apple Pencil — dessine sur la double-page !');
-      return !on;
-    });
-  };
-
-  const activeSpread = spreads[safeIndex];
   const contactIndex = spreads.findIndex((s) => s.kind === 'contact');
   // Ouvre la fiche d'un projet (depuis une photo, un index…), rattachée à sa double-page.
   const openArticleSheet = useCallback(
@@ -435,7 +396,7 @@ export function SketchbookStage() {
     if (index === -1) {
       const live = !isClone && closed;
       return (
-        <EditScope.Provider value={live && !pencilOn}>
+        <EditScope.Provider value={live}>
           <BookCover cover={settings.cover} interactive={live} onOpen={() => goTo(0)} edit={edit} />
         </EditScope.Provider>
       );
@@ -451,15 +412,10 @@ export function SketchbookStage() {
         isActive={!isClone && index === safeIndex}
         single={single}
         editing={editing}
-        pencilOn={pencilOn}
-        pencilColor={pencilColor}
-        eraser={eraser}
-        strokes={strokes[spread.id] ?? EMPTY_STROKES}
         alias={author.alias}
         ctx={ctx}
         onPrev={clickPrev}
         onNext={clickNext}
-        addStroke={addStroke}
         onMore={openSpreadSheet}
       />
     );
@@ -635,19 +591,6 @@ export function SketchbookStage() {
         onAdminAccess={isAdmin ? undefined : openLogin}
         onCover={hasCover ? () => goTo(-1) : undefined}
         coverActive={closed}
-      />
-
-      <DrawButton
-        on={pencilOn}
-        color={pencilColor}
-        eraser={eraser}
-        toggle={togglePencil}
-        setColor={setPencilColor}
-        setEraser={setEraser}
-        clear={() => {
-          if (activeSpread) clearStrokes(activeSpread.id);
-          setToast('Annotations effacées sur cette double-page');
-        }}
       />
 
       <MorePanel target={moreTarget} onClose={closeMore} />

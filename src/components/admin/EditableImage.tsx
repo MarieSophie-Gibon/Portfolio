@@ -4,6 +4,7 @@ import { ImagePlus, Loader2, Upload, X } from 'lucide-react';
 import { isVideoUrl, uploadImage, uploadMedia } from '@/services/contentApi';
 import type { ImageAsset } from '@/types/portfolio';
 import { useCanEdit } from './EditableText';
+import { btnPrimary, btnSecondary } from './formFields';
 
 const swallow = (e: SyntheticEvent) => e.stopPropagation();
 
@@ -70,7 +71,8 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
         aria-modal="true"
         aria-label="Changer l'image"
         onClick={swallow}
-        className="w-full max-w-md rounded-2xl bg-[#171A24] text-[#3A2414] border border-[#8E6A3E]/35 shadow-2xl p-5"
+        className="w-full max-w-md rounded-xl border border-[#8E6A3E]/40 p-5 text-[#2E1C0E] shadow-[0_30px_80px_rgba(10,5,0,0.7)]"
+        style={{ backgroundColor: '#F6EEDB', backgroundImage: 'var(--tex-paper)', backgroundSize: '320px 320px' }}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="t-fantasy text-lg font-extrabold">{allowVideo ? 'Image ou vidéo' : "Changer l'image"}</h2>
@@ -149,7 +151,7 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
         {error && <p className="mt-3 text-sm text-[#8E2F2A]">{error}</p>}
 
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
+          <button type="button" onClick={onClose} className={btnSecondary}>
             Annuler
           </button>
           <button
@@ -159,7 +161,7 @@ export function ImagePickerDialog({ value, allowRemove, allowVideo = false, onCl
               onSave({ ...value, src, alt, type });
               onClose();
             }}
-            className="px-4 py-2 rounded-lg bg-[#8E2F2A] text-[#F7E7C6] text-sm font-semibold hover:brightness-110 disabled:opacity-50"
+            className={btnPrimary}
           >
             Valider
           </button>
@@ -201,7 +203,7 @@ export function EditableImage({ value, onSave, children, className = '', allowRe
         }}
         className="absolute inset-0 flex items-center justify-center bg-ink/0 group-hover/img:bg-[#3B2416]/55 outline-dashed outline-2 outline-offset-[-2px] outline-[#B8893A]/70 transition-colors"
       >
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#8E2F2A] text-[#F7E7C6] font-mono text-[9px] font-bold opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#D8B36A] text-[#2A1A0E] font-mono text-[9px] font-bold opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg">
           <ImagePlus className="w-3 h-3" /> {allowVideo ? 'Changer le média' : "Changer l'image"}
         </span>
       </button>

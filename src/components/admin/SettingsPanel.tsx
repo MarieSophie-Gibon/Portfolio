@@ -4,7 +4,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { DEFAULT_CONTENT } from '@/data/defaultData';
 import { uid } from '@/lib/contentOps';
 import type { SocialIcon } from '@/types/portfolio';
-import { Checkbox, ColorInput, Field, Section, Select, TextArea, TextInput, btnPrimary, btnSecondary } from './formFields';
+import { Checkbox, ColorInput, Field, Section, Select, TextArea, TextInput, btnDanger, btnSecondary } from './formFields';
 
 const ICONS: { value: SocialIcon; label: string }[] = [
   { value: 'github', label: 'GitHub' },
@@ -110,7 +110,7 @@ export function SettingsPanel() {
                 edit((c) => Object.assign(c, structuredClone(DEFAULT_CONTENT)));
                 setConfirmReset(false);
               }}
-              className={btnPrimary}
+              className={btnDanger}
             >
               Oui, réinitialiser
             </button>

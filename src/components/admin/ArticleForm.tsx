@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 import type { ArticleFormValues } from '@/lib/contentOps';
 import { ImagePickerDialog } from './EditableImage';
-import { ColorInput, Field, Section, Select, TextArea, TextInput } from './formFields';
+import { ColorInput, Field, Section, Select, TextArea, TextInput, btnPrimary, btnSecondary, stickyActions } from './formFields';
 
 interface Props {
   initial: ArticleFormValues;
@@ -113,11 +113,11 @@ export function ArticleForm({ initial, submitLabel, onSubmit, onCancel }: Props)
         </Field>
       </Section>
 
-      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-[#8E6A3E]/25 bg-[#14161F] px-4 py-3">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
+      <div className={stickyActions}>
+        <button type="button" onClick={onCancel} className={btnSecondary}>
           Annuler
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-[#8E2F2A] text-sm font-semibold hover:brightness-110">
+        <button type="submit" className={btnPrimary}>
           {submitLabel}
         </button>
       </div>

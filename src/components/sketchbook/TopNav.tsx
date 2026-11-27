@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { List, Lock, Mail } from 'lucide-react';
 import type { Spread } from '@/types/portfolio';
-import { DIE_CUT } from './LogoSticker';
 
 /** Étiquette papier façon sticker (liseré blanc découpé + légère inclinaison). */
 function StickerTag({
@@ -37,7 +36,8 @@ function StickerTag({
       aria-label={label}
       aria-expanded={ariaExpanded}
       className="group relative block active:scale-95"
-      style={{ filter: DIE_CUT }}
+      // Ombre portée simple (plus de liseré blanc « sticker découpé »).
+      style={{ filter: 'drop-shadow(0 3px 4px rgba(20,10,0,0.45))' }}
     >
       <span
         // Inclinaison via variable CSS pour que le survol puisse la redresser.
@@ -51,7 +51,7 @@ function StickerTag({
           paddingLeft: shape === 'stamp' ? 12 : undefined,
         }}
       >
-        {shape === 'tag' && <span className="absolute left-[7px] top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]" />}
+        {shape === 'tag' && <span className="absolute left-[7px] top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#3A2414]/70 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]" />}
         {shape === 'stamp' && <span className="pointer-events-none absolute inset-[4px] rounded-[2px] border border-dashed border-ink/25" />}
         {children}
       </span>

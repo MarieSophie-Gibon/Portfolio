@@ -61,7 +61,7 @@ export function AdminTopBar() {
         className="inline-flex items-center gap-2 text-sm"
       >
         <span
-          className={`relative h-5 w-9 rounded-full border transition-colors ${editMode ? 'border-[#E9CF8E] bg-[#8E2F2A]' : 'border-[#E9CF8E]/40 bg-black/30'}`}
+          className={`relative h-5 w-9 rounded-full border transition-colors ${editMode ? 'border-[#E9CF8E] bg-[#B8893A]' : 'border-[#E9CF8E]/40 bg-black/30'}`}
         >
           <span
             className={`absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full transition-transform ${editMode ? 'translate-x-4' : ''}`}
@@ -101,12 +101,12 @@ export function AdminTopBar() {
         </button>
       )}
 
-      {/* Publier : sceau de cire */}
+      {/* Publier : laiton (action positive) */}
       <button
         type="button"
         onClick={() => void save()}
         disabled={!dirty || saveStatus === 'saving'}
-        className="t-fantasy inline-flex h-8 items-center gap-1.5 rounded-md bg-[#8E2F2A] px-3.5 text-[12px] uppercase tracking-[0.12em] text-[#F7E7C6] shadow-[0_2px_0_#5E1C18,inset_0_1px_0_rgba(255,220,200,0.25)] transition hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100"
+        className="t-fantasy inline-flex h-8 items-center gap-1.5 rounded-md bg-[linear-gradient(180deg,#F2D58C_0%,#D8B36A_45%,#B8893A_100%)] px-3.5 text-[12px] uppercase tracking-[0.12em] text-[#2A1A0E] shadow-[0_2px_0_#7A5622,inset_0_1px_0_rgba(255,245,210,0.5)] transition hover:brightness-105 disabled:opacity-40 disabled:hover:brightness-100"
       >
         {saveStatus === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         Publier

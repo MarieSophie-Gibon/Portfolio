@@ -78,7 +78,7 @@ export function GeneralPanel() {
                   <BackgroundSwatch preset={p} />
                 </span>
                 <span className="block truncate bg-[#3B2416]/80 px-1.5 py-0.5 text-[10px] text-[#F3E6C8]">{BACKGROUNDS[p].label}</span>
-                {active && <Check className="absolute right-1 top-1 h-3.5 w-3.5 rounded-full bg-[#8E2F2A] p-0.5 text-[#F7E7C6]" />}
+                {active && <Check className="absolute right-1 top-1 h-3.5 w-3.5 rounded-full bg-[#B8893A] p-0.5 text-[#2A1A0E]" />}
               </button>
             );
           })}
@@ -96,7 +96,7 @@ export function GeneralPanel() {
               {!bg.image.src && <ImagePlus className="h-4 w-4" />}
             </span>
             <span className="block truncate bg-[#3B2416]/80 px-1.5 py-0.5 text-[10px] text-[#F3E6C8]">Mon image</span>
-            {bg.preset === 'image' && <Check className="absolute right-1 top-1 h-3.5 w-3.5 rounded-full bg-[#8E2F2A] p-0.5 text-[#F7E7C6]" />}
+            {bg.preset === 'image' && <Check className="absolute right-1 top-1 h-3.5 w-3.5 rounded-full bg-[#B8893A] p-0.5 text-[#2A1A0E]" />}
           </button>
         </div>
 

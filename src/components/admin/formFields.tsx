@@ -21,9 +21,16 @@ export const UI = {
 const inputCls =
   'mt-1 w-full rounded-md border border-[#8E6A3E]/35 bg-[#FBF5E6] px-3 py-2 text-sm text-[#3A2414] shadow-[inset_0_1px_2px_rgba(60,35,10,0.12)] placeholder:text-[#A08060] outline-none focus:border-[#B8893A] focus:ring-2 focus:ring-[#B8893A]/25';
 
-/** Bouton principal (sceau de cire) et secondaire (laiton discret). */
+/** Bouton principal = laiton (actions positives : enregistrer, valider, ajouter). */
 export const btnPrimary =
+  'inline-flex items-center justify-center gap-2 rounded-md bg-[linear-gradient(180deg,#F2D58C_0%,#D8B36A_45%,#B8893A_100%)] px-4 py-2 text-sm font-semibold text-[#2A1A0E] shadow-[0_3px_0_#7A5622,0_6px_12px_-6px_rgba(60,35,10,0.6)] transition hover:brightness-105 active:translate-y-px active:shadow-[0_2px_0_#7A5622] disabled:cursor-not-allowed disabled:opacity-45';
+/** Bouton danger = cire rouge (actions destructrices : supprimer, réinitialiser). */
+export const btnDanger =
   'inline-flex items-center justify-center gap-2 rounded-md bg-[#8E2F2A] px-4 py-2 text-sm font-semibold text-[#F7E7C6] shadow-[0_3px_0_#5E1C18,0_6px_12px_-6px_rgba(60,20,10,0.6)] transition hover:brightness-110 active:translate-y-px active:shadow-[0_2px_0_#5E1C18] disabled:opacity-40';
+/** Bandeau d'actions collé en bas d'un formulaire (Annuler / Enregistrer). */
+export const stickyActions =
+  // -bottom-4 / -mb-4 : compense la marge intérieure du tiroir pour coller au bord.
+  'sticky -bottom-4 -mx-4 -mb-4 flex justify-end gap-2 border-t border-[#8E6A3E]/35 bg-[#EFE3C8]/95 px-4 py-3 shadow-[0_-8px_16px_-10px_rgba(60,35,10,0.35)] backdrop-blur-sm';
 export const btnSecondary =
   'inline-flex items-center justify-center gap-1.5 rounded-md border border-[#8E6A3E]/40 bg-[#FBF5E6] px-3 py-1.5 text-sm text-[#3A2414] transition hover:border-[#B8893A] hover:bg-white disabled:opacity-40';
 

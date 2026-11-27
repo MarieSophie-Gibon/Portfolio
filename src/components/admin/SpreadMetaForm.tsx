@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Spread } from '@/types/portfolio';
-import { ColorInput, Field, Section, TextInput } from './formFields';
+import { ColorInput, Field, Section, TextInput, btnPrimary, btnSecondary, stickyActions } from './formFields';
 
 type Meta = Pick<Spread, 'label' | 'day' | 'dateLabel' | 'tabLabel' | 'tabColor' | 'edgeWord' | 'edgeLeftColor' | 'edgeRightColor' | 'hideTab'>;
 
@@ -71,11 +71,11 @@ export function SpreadMetaForm({ spread, onSubmit, onCancel }: Props) {
           Masquer l'intercalaire
         </label>
       </Section>
-      <div className="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-[#8E6A3E]/25 bg-[#14161F] px-4 py-3">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-[#5A3520]/10 text-sm hover:bg-[#5A3520]/20">
+      <div className={stickyActions}>
+        <button type="button" onClick={onCancel} className={btnSecondary}>
           Annuler
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-[#8E2F2A] text-sm font-semibold hover:brightness-110">
+        <button type="submit" className={btnPrimary}>
           Enregistrer
         </button>
       </div>
